@@ -6,8 +6,6 @@ struct ElementInfo {
     let name: String
     let mass: String
     let isMetal: Bool
-    let row: Int
-    let col: Int
 }
 
 struct PeriodicTableView: View {
@@ -21,149 +19,200 @@ struct PeriodicTableView: View {
     static let metalBlue = "#2563EB"
     static let nonMetalOrange = "#F97316"
 
-    // m = металл, n = неметалл
-    static let elements: [ElementInfo] = [
-        // Период 1
-        ElementInfo(number: 1, symbol: "H", name: "Водород", mass: "1.008", isMetal: false, row: 0, col: 1),
-        ElementInfo(number: 2, symbol: "He", name: "Гелий", mass: "4.003", isMetal: false, row: 0, col: 18),
+    // MARK: - Таблица (визуальные ряды 0..13, столбцы 0..9)
+    // Столбцы: 0=I, 1=II, 2=III, 3=IV, 4=V, 5=VI, 6=VII, 7=VIII-1, 8=VIII-2, 9=VIII-3
 
-        // Период 2
-        ElementInfo(number: 3, symbol: "Li", name: "Литий", mass: "6.94", isMetal: true, row: 1, col: 1),
-        ElementInfo(number: 4, symbol: "Be", name: "Бериллий", mass: "9.012", isMetal: true, row: 1, col: 2),
-        ElementInfo(number: 5, symbol: "B", name: "Бор", mass: "10.81", isMetal: false, row: 1, col: 13),
-        ElementInfo(number: 6, symbol: "C", name: "Углерод", mass: "12.011", isMetal: false, row: 1, col: 14),
-        ElementInfo(number: 7, symbol: "N", name: "Азот", mass: "14.007", isMetal: false, row: 1, col: 15),
-        ElementInfo(number: 8, symbol: "O", name: "Кислород", mass: "15.999", isMetal: false, row: 1, col: 16),
-        ElementInfo(number: 9, symbol: "F", name: "Фтор", mass: "18.998", isMetal: false, row: 1, col: 17),
-        ElementInfo(number: 10, symbol: "Ne", name: "Неон", mass: "20.180", isMetal: false, row: 1, col: 18),
-
-        // Период 3
-        ElementInfo(number: 11, symbol: "Na", name: "Натрий", mass: "22.990", isMetal: true, row: 2, col: 1),
-        ElementInfo(number: 12, symbol: "Mg", name: "Магний", mass: "24.305", isMetal: true, row: 2, col: 2),
-        ElementInfo(number: 13, symbol: "Al", name: "Алюминий", mass: "26.982", isMetal: true, row: 2, col: 13),
-        ElementInfo(number: 14, symbol: "Si", name: "Кремний", mass: "28.085", isMetal: false, row: 2, col: 14),
-        ElementInfo(number: 15, symbol: "P", name: "Фосфор", mass: "30.974", isMetal: false, row: 2, col: 15),
-        ElementInfo(number: 16, symbol: "S", name: "Сера", mass: "32.06", isMetal: false, row: 2, col: 16),
-        ElementInfo(number: 17, symbol: "Cl", name: "Хлор", mass: "35.45", isMetal: false, row: 2, col: 17),
-        ElementInfo(number: 18, symbol: "Ar", name: "Аргон", mass: "39.948", isMetal: false, row: 2, col: 18),
-
-        // Период 4
-        ElementInfo(number: 19, symbol: "K", name: "Калий", mass: "39.098", isMetal: true, row: 3, col: 1),
-        ElementInfo(number: 20, symbol: "Ca", name: "Кальций", mass: "40.078", isMetal: true, row: 3, col: 2),
-        ElementInfo(number: 21, symbol: "Sc", name: "Скандий", mass: "44.956", isMetal: true, row: 3, col: 3),
-        ElementInfo(number: 22, symbol: "Ti", name: "Титан", mass: "47.867", isMetal: true, row: 3, col: 4),
-        ElementInfo(number: 23, symbol: "V", name: "Ванадий", mass: "50.942", isMetal: true, row: 3, col: 5),
-        ElementInfo(number: 24, symbol: "Cr", name: "Хром", mass: "51.996", isMetal: true, row: 3, col: 6),
-        ElementInfo(number: 25, symbol: "Mn", name: "Марганец", mass: "54.938", isMetal: true, row: 3, col: 7),
-        ElementInfo(number: 26, symbol: "Fe", name: "Железо", mass: "55.845", isMetal: true, row: 3, col: 8),
-        ElementInfo(number: 27, symbol: "Co", name: "Кобальт", mass: "58.933", isMetal: true, row: 3, col: 9),
-        ElementInfo(number: 28, symbol: "Ni", name: "Никель", mass: "58.693", isMetal: true, row: 3, col: 10),
-        ElementInfo(number: 29, symbol: "Cu", name: "Медь", mass: "63.546", isMetal: true, row: 3, col: 11),
-        ElementInfo(number: 30, symbol: "Zn", name: "Цинк", mass: "65.38", isMetal: true, row: 3, col: 12),
-        ElementInfo(number: 31, symbol: "Ga", name: "Галлий", mass: "69.723", isMetal: true, row: 3, col: 13),
-        ElementInfo(number: 32, symbol: "Ge", name: "Германий", mass: "72.630", isMetal: true, row: 3, col: 14),
-        ElementInfo(number: 33, symbol: "As", name: "Мышьяк", mass: "74.922", isMetal: false, row: 3, col: 15),
-        ElementInfo(number: 34, symbol: "Se", name: "Селен", mass: "78.971", isMetal: false, row: 3, col: 16),
-        ElementInfo(number: 35, symbol: "Br", name: "Бром", mass: "79.904", isMetal: false, row: 3, col: 17),
-        ElementInfo(number: 36, symbol: "Kr", name: "Криптон", mass: "83.798", isMetal: false, row: 3, col: 18),
-
-        // Период 5
-        ElementInfo(number: 37, symbol: "Rb", name: "Рубидий", mass: "85.468", isMetal: true, row: 4, col: 1),
-        ElementInfo(number: 38, symbol: "Sr", name: "Стронций", mass: "87.62", isMetal: true, row: 4, col: 2),
-        ElementInfo(number: 39, symbol: "Y", name: "Иттрий", mass: "88.906", isMetal: true, row: 4, col: 3),
-        ElementInfo(number: 40, symbol: "Zr", name: "Цирконий", mass: "91.224", isMetal: true, row: 4, col: 4),
-        ElementInfo(number: 41, symbol: "Nb", name: "Ниобий", mass: "92.906", isMetal: true, row: 4, col: 5),
-        ElementInfo(number: 42, symbol: "Mo", name: "Молибден", mass: "95.95", isMetal: true, row: 4, col: 6),
-        ElementInfo(number: 43, symbol: "Tc", name: "Технеций", mass: "(98)", isMetal: true, row: 4, col: 7),
-        ElementInfo(number: 44, symbol: "Ru", name: "Рутений", mass: "101.07", isMetal: true, row: 4, col: 8),
-        ElementInfo(number: 45, symbol: "Rh", name: "Родий", mass: "102.91", isMetal: true, row: 4, col: 9),
-        ElementInfo(number: 46, symbol: "Pd", name: "Палладий", mass: "106.42", isMetal: true, row: 4, col: 10),
-        ElementInfo(number: 47, symbol: "Ag", name: "Серебро", mass: "107.87", isMetal: true, row: 4, col: 11),
-        ElementInfo(number: 48, symbol: "Cd", name: "Кадмий", mass: "112.41", isMetal: true, row: 4, col: 12),
-        ElementInfo(number: 49, symbol: "In", name: "Индий", mass: "114.82", isMetal: true, row: 4, col: 13),
-        ElementInfo(number: 50, symbol: "Sn", name: "Олово", mass: "118.71", isMetal: true, row: 4, col: 14),
-        ElementInfo(number: 51, symbol: "Sb", name: "Сурьма", mass: "121.76", isMetal: false, row: 4, col: 15),
-        ElementInfo(number: 52, symbol: "Te", name: "Теллур", mass: "127.60", isMetal: false, row: 4, col: 16),
-        ElementInfo(number: 53, symbol: "I", name: "Иод", mass: "126.90", isMetal: false, row: 4, col: 17),
-        ElementInfo(number: 54, symbol: "Xe", name: "Ксенон", mass: "131.29", isMetal: false, row: 4, col: 18),
-
-        // Период 6
-        ElementInfo(number: 55, symbol: "Cs", name: "Цезий", mass: "132.91", isMetal: true, row: 5, col: 1),
-        ElementInfo(number: 56, symbol: "Ba", name: "Барий", mass: "137.33", isMetal: true, row: 5, col: 2),
-        ElementInfo(number: 57, symbol: "La", name: "Лантан", mass: "138.91", isMetal: true, row: 7, col: 3),
-        ElementInfo(number: 58, symbol: "Ce", name: "Церий", mass: "140.12", isMetal: true, row: 7, col: 4),
-        ElementInfo(number: 59, symbol: "Pr", name: "Празеодим", mass: "140.91", isMetal: true, row: 7, col: 5),
-        ElementInfo(number: 60, symbol: "Nd", name: "Неодим", mass: "144.24", isMetal: true, row: 7, col: 6),
-        ElementInfo(number: 61, symbol: "Pm", name: "Прометий", mass: "(145)", isMetal: true, row: 7, col: 7),
-        ElementInfo(number: 62, symbol: "Sm", name: "Самарий", mass: "150.36", isMetal: true, row: 7, col: 8),
-        ElementInfo(number: 63, symbol: "Eu", name: "Европий", mass: "151.96", isMetal: true, row: 7, col: 9),
-        ElementInfo(number: 64, symbol: "Gd", name: "Гадолиний", mass: "157.25", isMetal: true, row: 7, col: 10),
-        ElementInfo(number: 65, symbol: "Tb", name: "Тербий", mass: "158.93", isMetal: true, row: 7, col: 11),
-        ElementInfo(number: 66, symbol: "Dy", name: "Диспрозий", mass: "162.50", isMetal: true, row: 7, col: 12),
-        ElementInfo(number: 67, symbol: "Ho", name: "Гольмий", mass: "164.93", isMetal: true, row: 7, col: 13),
-        ElementInfo(number: 68, symbol: "Er", name: "Эрбий", mass: "167.26", isMetal: true, row: 7, col: 14),
-        ElementInfo(number: 69, symbol: "Tm", name: "Тулий", mass: "168.93", isMetal: true, row: 7, col: 15),
-        ElementInfo(number: 70, symbol: "Yb", name: "Иттербий", mass: "173.05", isMetal: true, row: 7, col: 16),
-        ElementInfo(number: 71, symbol: "Lu", name: "Лютеций", mass: "174.97", isMetal: true, row: 7, col: 17),
-        ElementInfo(number: 72, symbol: "Hf", name: "Гафний", mass: "178.49", isMetal: true, row: 5, col: 4),
-        ElementInfo(number: 73, symbol: "Ta", name: "Тантал", mass: "180.95", isMetal: true, row: 5, col: 5),
-        ElementInfo(number: 74, symbol: "W", name: "Вольфрам", mass: "183.84", isMetal: true, row: 5, col: 6),
-        ElementInfo(number: 75, symbol: "Re", name: "Рений", mass: "186.21", isMetal: true, row: 5, col: 7),
-        ElementInfo(number: 76, symbol: "Os", name: "Осмий", mass: "190.23", isMetal: true, row: 5, col: 8),
-        ElementInfo(number: 77, symbol: "Ir", name: "Иридий", mass: "192.22", isMetal: true, row: 5, col: 9),
-        ElementInfo(number: 78, symbol: "Pt", name: "Платина", mass: "195.08", isMetal: true, row: 5, col: 10),
-        ElementInfo(number: 79, symbol: "Au", name: "Золото", mass: "196.97", isMetal: true, row: 5, col: 11),
-        ElementInfo(number: 80, symbol: "Hg", name: "Ртуть", mass: "200.59", isMetal: true, row: 5, col: 12),
-        ElementInfo(number: 81, symbol: "Tl", name: "Таллий", mass: "204.38", isMetal: true, row: 5, col: 13),
-        ElementInfo(number: 82, symbol: "Pb", name: "Свинец", mass: "207.2", isMetal: true, row: 5, col: 14),
-        ElementInfo(number: 83, symbol: "Bi", name: "Висмут", mass: "208.98", isMetal: true, row: 5, col: 15),
-        ElementInfo(number: 84, symbol: "Po", name: "Полоний", mass: "(209)", isMetal: true, row: 5, col: 16),
-        ElementInfo(number: 85, symbol: "At", name: "Астат", mass: "(210)", isMetal: false, row: 5, col: 17),
-        ElementInfo(number: 86, symbol: "Rn", name: "Радон", mass: "(222)", isMetal: false, row: 5, col: 18),
-
-        // Период 7
-        ElementInfo(number: 87, symbol: "Fr", name: "Франций", mass: "(223)", isMetal: true, row: 6, col: 1),
-        ElementInfo(number: 88, symbol: "Ra", name: "Радий", mass: "(226)", isMetal: true, row: 6, col: 2),
-        ElementInfo(number: 89, symbol: "Ac", name: "Актиний", mass: "(227)", isMetal: true, row: 8, col: 3),
-        ElementInfo(number: 90, symbol: "Th", name: "Торий", mass: "232.04", isMetal: true, row: 8, col: 4),
-        ElementInfo(number: 91, symbol: "Pa", name: "Протактиний", mass: "231.04", isMetal: true, row: 8, col: 5),
-        ElementInfo(number: 92, symbol: "U", name: "Уран", mass: "238.03", isMetal: true, row: 8, col: 6),
-        ElementInfo(number: 93, symbol: "Np", name: "Нептуний", mass: "(237)", isMetal: true, row: 8, col: 7),
-        ElementInfo(number: 94, symbol: "Pu", name: "Плутоний", mass: "(244)", isMetal: true, row: 8, col: 8),
-        ElementInfo(number: 95, symbol: "Am", name: "Америций", mass: "(243)", isMetal: true, row: 8, col: 9),
-        ElementInfo(number: 96, symbol: "Cm", name: "Кюрий", mass: "(247)", isMetal: true, row: 8, col: 10),
-        ElementInfo(number: 97, symbol: "Bk", name: "Берклий", mass: "(247)", isMetal: true, row: 8, col: 11),
-        ElementInfo(number: 98, symbol: "Cf", name: "Калифорний", mass: "(251)", isMetal: true, row: 8, col: 12),
-        ElementInfo(number: 99, symbol: "Es", name: "Эйнштейний", mass: "(252)", isMetal: true, row: 8, col: 13),
-        ElementInfo(number: 100, symbol: "Fm", name: "Фермий", mass: "(257)", isMetal: true, row: 8, col: 14),
-        ElementInfo(number: 101, symbol: "Md", name: "Менделевий", mass: "(258)", isMetal: true, row: 8, col: 15),
-        ElementInfo(number: 102, symbol: "No", name: "Нобелий", mass: "(259)", isMetal: true, row: 8, col: 16),
-        ElementInfo(number: 103, symbol: "Lr", name: "Лоуренсий", mass: "(266)", isMetal: true, row: 8, col: 17),
-        ElementInfo(number: 104, symbol: "Rf", name: "Резерфордий", mass: "(267)", isMetal: true, row: 6, col: 4),
-        ElementInfo(number: 105, symbol: "Db", name: "Дубний", mass: "(268)", isMetal: true, row: 6, col: 5),
-        ElementInfo(number: 106, symbol: "Sg", name: "Сиборгий", mass: "(269)", isMetal: true, row: 6, col: 6),
-        ElementInfo(number: 107, symbol: "Bh", name: "Борий", mass: "(270)", isMetal: true, row: 6, col: 7),
-        ElementInfo(number: 108, symbol: "Hs", name: "Хассий", mass: "(269)", isMetal: true, row: 6, col: 8),
-        ElementInfo(number: 109, symbol: "Mt", name: "Мейтнерий", mass: "(278)", isMetal: true, row: 6, col: 9),
-        ElementInfo(number: 110, symbol: "Ds", name: "Дармштадтий", mass: "(281)", isMetal: true, row: 6, col: 10),
-        ElementInfo(number: 111, symbol: "Rg", name: "Рентгений", mass: "(282)", isMetal: true, row: 6, col: 11),
-        ElementInfo(number: 112, symbol: "Cn", name: "Коперниций", mass: "(285)", isMetal: true, row: 6, col: 12),
-        ElementInfo(number: 113, symbol: "Nh", name: "Нихоний", mass: "(286)", isMetal: true, row: 6, col: 13),
-        ElementInfo(number: 114, symbol: "Fl", name: "Флеровий", mass: "(289)", isMetal: true, row: 6, col: 14),
-        ElementInfo(number: 115, symbol: "Mc", name: "Московий", mass: "(290)", isMetal: true, row: 6, col: 15),
-        ElementInfo(number: 116, symbol: "Lv", name: "Ливерморий", mass: "(293)", isMetal: true, row: 6, col: 16),
-        ElementInfo(number: 117, symbol: "Ts", name: "Теннессин", mass: "(294)", isMetal: false, row: 6, col: 17),
-        ElementInfo(number: 118, symbol: "Og", name: "Оганесон", mass: "(294)", isMetal: false, row: 6, col: 18)
+    static let grid: [[ElementInfo?]] = [
+        // Ряд 0: Период 1
+        [
+            el(1,"H","Водород","1.008",false),
+            nil, nil, nil, nil, nil, nil,
+            nil, nil,
+            el(2,"He","Гелий","4.003",false)
+        ],
+        // Ряд 1: Период 2
+        [
+            el(3,"Li","Литий","6.94",true),
+            el(4,"Be","Бериллий","9.012",true),
+            el(5,"B","Бор","10.81",false),
+            el(6,"C","Углерод","12.011",false),
+            el(7,"N","Азот","14.007",false),
+            el(8,"O","Кислород","15.999",false),
+            el(9,"F","Фтор","18.998",false),
+            nil, nil,
+            el(10,"Ne","Неон","20.180",false)
+        ],
+        // Ряд 2: Период 3
+        [
+            el(11,"Na","Натрий","22.990",true),
+            el(12,"Mg","Магний","24.305",true),
+            el(13,"Al","Алюминий","26.982",true),
+            el(14,"Si","Кремний","28.085",false),
+            el(15,"P","Фосфор","30.974",false),
+            el(16,"S","Сера","32.06",false),
+            el(17,"Cl","Хлор","35.45",false),
+            nil, nil,
+            el(18,"Ar","Аргон","39.948",false)
+        ],
+        // Ряд 3: Период 4 — A-подгруппа (K, Ca, Sc..Mn) + Fe Co Ni
+        [
+            el(19,"K","Калий","39.098",true),
+            el(20,"Ca","Кальций","40.078",true),
+            el(21,"Sc","Скандий","44.956",true),
+            el(22,"Ti","Титан","47.867",true),
+            el(23,"V","Ванадий","50.942",true),
+            el(24,"Cr","Хром","51.996",true),
+            el(25,"Mn","Марганец","54.938",true),
+            el(26,"Fe","Железо","55.845",true),
+            el(27,"Co","Кобальт","58.933",true),
+            el(28,"Ni","Никель","58.693",true)
+        ],
+        // Ряд 4: Период 4 — B-подгруппа (Cu, Zn, Ga..Br) + Kr
+        [
+            el(29,"Cu","Медь","63.546",true),
+            el(30,"Zn","Цинк","65.38",true),
+            el(31,"Ga","Галлий","69.723",true),
+            el(32,"Ge","Германий","72.630",true),
+            el(33,"As","Мышьяк","74.922",false),
+            el(34,"Se","Селен","78.971",false),
+            el(35,"Br","Бром","79.904",false),
+            nil, nil,
+            el(36,"Kr","Криптон","83.798",false)
+        ],
+        // Ряд 5: Период 5 — A-подгруппа
+        [
+            el(37,"Rb","Рубидий","85.468",true),
+            el(38,"Sr","Стронций","87.62",true),
+            el(39,"Y","Иттрий","88.906",true),
+            el(40,"Zr","Цирконий","91.224",true),
+            el(41,"Nb","Ниобий","92.906",true),
+            el(42,"Mo","Молибден","95.95",true),
+            el(43,"Tc","Технеций","(98)",true),
+            el(44,"Ru","Рутений","101.07",true),
+            el(45,"Rh","Родий","102.91",true),
+            el(46,"Pd","Палладий","106.42",true)
+        ],
+        // Ряд 6: Период 5 — B-подгруппа
+        [
+            el(47,"Ag","Серебро","107.87",true),
+            el(48,"Cd","Кадмий","112.41",true),
+            el(49,"In","Индий","114.82",true),
+            el(50,"Sn","Олово","118.71",true),
+            el(51,"Sb","Сурьма","121.76",false),
+            el(52,"Te","Теллур","127.60",false),
+            el(53,"I","Иод","126.90",false),
+            nil, nil,
+            el(54,"Xe","Ксенон","131.29",false)
+        ],
+        // Ряд 7: Период 6 — A-подгруппа
+        [
+            el(55,"Cs","Цезий","132.91",true),
+            el(56,"Ba","Барий","137.33",true),
+            el(57,"La","Лантан","138.91",true),
+            el(72,"Hf","Гафний","178.49",true),
+            el(73,"Ta","Тантал","180.95",true),
+            el(74,"W","Вольфрам","183.84",true),
+            el(75,"Re","Рений","186.21",true),
+            el(76,"Os","Осмий","190.23",true),
+            el(77,"Ir","Иридий","192.22",true),
+            el(78,"Pt","Платина","195.08",true)
+        ],
+        // Ряд 8: Период 6 — B-подгруппа
+        [
+            el(79,"Au","Золото","196.97",true),
+            el(80,"Hg","Ртуть","200.59",true),
+            el(81,"Tl","Таллий","204.38",true),
+            el(82,"Pb","Свинец","207.2",true),
+            el(83,"Bi","Висмут","208.98",true),
+            el(84,"Po","Полоний","(209)",true),
+            el(85,"At","Астат","(210)",false),
+            nil, nil,
+            el(86,"Rn","Радон","(222)",false)
+        ],
+        // Ряд 9: Период 7 — A-подгруппа
+        [
+            el(87,"Fr","Франций","(223)",true),
+            el(88,"Ra","Радий","(226)",true),
+            el(89,"Ac","Актиний","(227)",true),
+            el(104,"Rf","Резерфордий","(267)",true),
+            el(105,"Db","Дубний","(268)",true),
+            el(106,"Sg","Сиборгий","(269)",true),
+            el(107,"Bh","Борий","(270)",true),
+            el(108,"Hs","Хассий","(269)",true),
+            el(109,"Mt","Мейтнерий","(278)",true),
+            el(110,"Ds","Дармштадтий","(281)",true)
+        ],
+        // Ряд 10: Период 7 — B-подгруппа
+        [
+            el(111,"Rg","Рентгений","(282)",true),
+            el(112,"Cn","Коперниций","(285)",true),
+            el(113,"Nh","Нихоний","(286)",true),
+            el(114,"Fl","Флеровий","(289)",true),
+            el(115,"Mc","Московий","(290)",true),
+            el(116,"Lv","Ливерморий","(293)",true),
+            el(117,"Ts","Теннессин","(294)",false),
+            nil, nil,
+            el(118,"Og","Оганесон","(294)",false)
+        ],
+        // Ряд 11: пустой
+        [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil],
+        // Ряд 12: Лантаноиды (La уже в основной таблице, тут Ce..Lu)
+        [
+            nil, nil,
+            el(58,"Ce","Церий","140.12",true),
+            el(59,"Pr","Празеодим","140.91",true),
+            el(60,"Nd","Неодим","144.24",true),
+            el(61,"Pm","Прометий","(145)",true),
+            el(62,"Sm","Самарий","150.36",true),
+            el(63,"Eu","Европий","151.96",true),
+            el(64,"Gd","Гадолиний","157.25",true),
+            el(65,"Tb","Тербий","158.93",true)
+        ],
+        // Ряд 13: продолжение лантаноидов + актиноиды начала
+        [
+            el(66,"Dy","Диспрозий","162.50",true),
+            el(67,"Ho","Гольмий","164.93",true),
+            el(68,"Er","Эрбий","167.26",true),
+            el(69,"Tm","Тулий","168.93",true),
+            el(70,"Yb","Иттербий","173.05",true),
+            el(71,"Lu","Лютеций","174.97",true),
+            nil, nil, nil, nil
+        ],
+        // Ряд 14: Актиноиды (Ac уже в основной таблице, тут Th..Lr)
+        [
+            nil, nil,
+            el(90,"Th","Торий","232.04",true),
+            el(91,"Pa","Протактиний","231.04",true),
+            el(92,"U","Уран","238.03",true),
+            el(93,"Np","Нептуний","(237)",true),
+            el(94,"Pu","Плутоний","(244)",true),
+            el(95,"Am","Америций","(243)",true),
+            el(96,"Cm","Кюрий","(247)",true),
+            el(97,"Bk","Берклий","(247)",true)
+        ],
+        // Ряд 15: продолжение актиноидов
+        [
+            el(98,"Cf","Калифорний","(251)",true),
+            el(99,"Es","Эйнштейний","(252)",true),
+            el(100,"Fm","Фермий","(257)",true),
+            el(101,"Md","Менделевий","(258)",true),
+            el(102,"No","Нобелий","(259)",true),
+            el(103,"Lr","Лоуренсий","(266)",true),
+            nil, nil, nil, nil
+        ]
     ]
 
-    static let cellSize: CGFloat = 46
-    static let gap: CGFloat = 3
+    static func el(_ n: Int, _ s: String, _ name: String, _ m: String, _ metal: Bool) -> ElementInfo {
+        ElementInfo(number: n, symbol: s, name: name, mass: m, isMetal: metal)
+    }
 
-    static let elementMap: [Int: ElementInfo] = {
-        var map: [Int: ElementInfo] = [:]
-        for e in elements { map[e.row * 100 + e.col] = e }
-        return map
-    }()
+    // Подписи групп сверху
+    let groupHeaders = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "", ""]
+
+    // Подписи периодов слева
+    let periodLabels: [String] = [
+        "1", "2", "3", "4", "4", "5", "5", "6", "6", "7", "7", "", "6*", "6*", "7*", "7*"
+    ]
 
     var body: some View {
         ZStack {
@@ -176,7 +225,7 @@ struct PeriodicTableView: View {
                         Text("Периодическая система")
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.white)
-                        Text("Д. И. Менделеева · 118 элементов")
+                        Text("Д. И. Менделеева · 8 групп")
                             .font(.system(size: 12))
                             .foregroundColor(Color(hex: "#94A3B8"))
                     }
@@ -192,7 +241,7 @@ struct PeriodicTableView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
-                .padding(.bottom, 10)
+                .padding(.bottom, 8)
 
                 // Легенда
                 HStack(spacing: 16) {
@@ -215,13 +264,13 @@ struct PeriodicTableView: View {
                     Spacer()
                 }
                 .padding(.horizontal, 16)
-                .padding(.bottom, 10)
+                .padding(.bottom, 8)
 
                 // Таблица
                 ScrollView([.horizontal, .vertical], showsIndicators: false) {
-                    periodicTableGrid
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
+                    tableGrid
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
                 }
 
                 // Подсказка
@@ -236,89 +285,64 @@ struct PeriodicTableView: View {
                     .padding(.horizontal, 16).padding(.vertical, 10)
                     .background(Color(hex: "#1E293B"))
                     .cornerRadius(20)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 16)
                     .transition(.opacity)
                 } else if addedCount > 0 {
                     Text("Всего добавлено: \(addedCount)")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(Color(hex: "#94A3B8"))
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 16)
                 }
             }
         }
     }
 
     // MARK: - Сетка
-    var periodicTableGrid: some View {
-        let cellSize = Self.cellSize
-        let gap = Self.gap
+    let cellW: CGFloat = 50
+    let cellH: CGFloat = 46
+    let gap: CGFloat = 3
+    let leftColW: CGFloat = 34
 
-        return VStack(spacing: gap) {
-            // Номера групп
+    var tableGrid: some View {
+        VStack(spacing: gap) {
+            // Номера групп сверху
             HStack(spacing: gap) {
-                Color.clear.frame(width: 30, height: 18)
-                ForEach(1...18, id: \.self) { col in
-                    Text("\(col)")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(Color(hex: "#64748B"))
-                        .frame(width: cellSize, height: 18)
+                Color.clear.frame(width: leftColW, height: 20)
+                ForEach(0..<10, id: \.self) { i in
+                    Text(groupHeaders[i])
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(i < 7 ? Color(hex: "#CBD5E1") : Color(hex: "#94A3B8"))
+                        .frame(width: i >= 7 ? cellW * 0.72 : cellW, height: 20)
                 }
             }
 
-            // Периоды 1-7
-            ForEach(0...6, id: \.self) { row in
+            // Ряды таблицы
+            ForEach(0..<Self.grid.count, id: \.self) { rowIndex in
+                // Пустой ряд-разделитель перед лантаноидами
+                if rowIndex == 11 {
+                    Color.clear.frame(height: 14)
+                }
                 HStack(spacing: gap) {
+                    // Номер периода
                     ZStack {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color(hex: "#1E293B"))
-                        Text("\(row + 1)")
-                            .font(.system(size: 11, weight: .bold))
+                        RoundedRectangle(cornerRadius: 4).fill(Color(hex: "#1E293B"))
+                        Text(periodLabels[rowIndex])
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundColor(Color(hex: "#94A3B8"))
                     }
-                    .frame(width: 30, height: cellSize)
+                    .frame(width: leftColW, height: cellH)
 
-                    ForEach(1...18, id: \.self) { col in
-                        if let element = Self.elementMap[row * 100 + col] {
-                            cellView(element)
+                    // 10 ячеек
+                    ForEach(0..<10, id: \.self) { colIndex in
+                        let cell = Self.grid[rowIndex][colIndex]
+                        if let element = cell {
+                            cellView(element, isNarrow: colIndex >= 7)
                         } else {
-                            Color.clear.frame(width: cellSize, height: cellSize)
+                            Color.clear.frame(
+                                width: colIndex >= 7 ? cellW * 0.72 : cellW,
+                                height: cellH
+                            )
                         }
-                    }
-                }
-            }
-
-            Color.clear.frame(height: 12)
-
-            // Лантаноиды
-            HStack(spacing: gap) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 4).fill(Color(hex: "#1E293B"))
-                    Text("6*").font(.system(size: 10, weight: .bold))
-                        .foregroundColor(Color(hex: Self.metalBlue))
-                }
-                .frame(width: 30, height: cellSize)
-                ForEach(1...18, id: \.self) { col in
-                    if let element = Self.elementMap[7 * 100 + col] {
-                        cellView(element)
-                    } else {
-                        Color.clear.frame(width: cellSize, height: cellSize)
-                    }
-                }
-            }
-
-            // Актиноиды
-            HStack(spacing: gap) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 4).fill(Color(hex: "#1E293B"))
-                    Text("7*").font(.system(size: 10, weight: .bold))
-                        .foregroundColor(Color(hex: Self.metalBlue))
-                }
-                .frame(width: 30, height: cellSize)
-                ForEach(1...18, id: \.self) { col in
-                    if let element = Self.elementMap[8 * 100 + col] {
-                        cellView(element)
-                    } else {
-                        Color.clear.frame(width: cellSize, height: cellSize)
                     }
                 }
             }
@@ -326,8 +350,9 @@ struct PeriodicTableView: View {
     }
 
     // MARK: - Ячейка
-    func cellView(_ element: ElementInfo) -> some View {
-        let cellSize = Self.cellSize
+    func cellView(_ element: ElementInfo, isNarrow: Bool) -> some View {
+        let w = isNarrow ? cellW * 0.72 : cellW
+        let h = cellH
         let isTapped = tappedSymbol == element.symbol
         let bgColor = Color(hex: element.isMetal ? Self.metalBlue : Self.nonMetalOrange)
 
@@ -344,37 +369,37 @@ struct PeriodicTableView: View {
                     )
 
                 VStack(spacing: 0) {
-                    // Порядковый номер — сверху слева
+                    // Порядковый номер сверху слева
                     HStack {
                         Text("\(element.number)")
-                            .font(.system(size: 8, weight: .semibold))
-                            .foregroundColor(Color.white.opacity(0.85))
+                            .font(.system(size: isNarrow ? 7 : 8, weight: .semibold))
+                            .foregroundColor(Color.white.opacity(0.9))
                         Spacer()
                     }
                     .padding(.horizontal, 3).padding(.top, 2)
 
                     Spacer(minLength: 0)
 
-                    // Символ — по центру
+                    // Символ по центру
                     Text(element.symbol)
-                        .font(.system(size: element.symbol.count > 1 ? 16 : 18, weight: .bold))
+                        .font(.system(size: isNarrow ? 13 : (element.symbol.count > 1 ? 16 : 18), weight: .bold))
                         .foregroundColor(.white)
-                        .minimumScaleFactor(0.6)
+                        .minimumScaleFactor(0.5)
                         .lineLimit(1)
 
                     Spacer(minLength: 0)
 
-                    // Атомная масса — снизу
+                    // Атомная масса снизу
                     Text(element.mass)
-                        .font(.system(size: 7, weight: .medium))
-                        .foregroundColor(Color.white.opacity(0.75))
+                        .font(.system(size: isNarrow ? 6 : 7, weight: .medium))
+                        .foregroundColor(Color.white.opacity(0.8))
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
                         .padding(.bottom, 2)
                 }
                 .padding(.horizontal, 2)
             }
-            .frame(width: cellSize, height: cellSize)
+            .frame(width: w, height: h)
             .scaleEffect(isTapped ? 1.15 : 1.0)
         }
         .buttonStyle(.plain)
