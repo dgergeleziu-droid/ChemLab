@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Расширение для цвета по HEX
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -23,14 +22,12 @@ extension Color {
     }
 }
 
-// MARK: - Виды предметов на холсте
 enum ItemKind {
     case reagent
     case product
     case equation
 }
 
-// MARK: - Предмет на холсте
 struct WorldItem: Identifiable, Equatable {
     let id: UUID
     var symbol: String
@@ -61,7 +58,6 @@ struct WorldItem: Identifiable, Equatable {
     }
 }
 
-// MARK: - Реагент (то, что можно взять из панели)
 struct Reagent: Identifiable, Hashable {
     var id: String { symbol }
     let symbol: String
@@ -76,7 +72,6 @@ enum ReagentGroup: String, CaseIterable {
     case organic = "Органика"
 }
 
-// MARK: - Типы эффектов реакции
 enum EffectType {
     case explosion
     case flash
@@ -90,7 +85,6 @@ enum EffectType {
     case none
 }
 
-// MARK: - Химическая реакция
 struct ChemicalReaction {
     let reagents: Set<String>
     let products: [String]
@@ -98,12 +92,40 @@ struct ChemicalReaction {
     let equation: String
     let effect: EffectType
     let effectColorHex: String
+    let warning: String?  // ← новое поле
+
+    init(reagents: Set<String>,
+         products: [String],
+         productNames: [String],
+         equation: String,
+         effect: EffectType,
+         effectColorHex: String,
+         warning: String? = nil) {
+        self.reagents = reagents
+        self.products = products
+        self.productNames = productNames
+        self.equation = equation
+        self.effect = effect
+        self.effectColorHex = effectColorHex
+        self.warning = warning
+    }
 }
 
-// MARK: - Анимация эффекта
 struct EffectAnimation: Identifiable {
     let id = UUID()
     let position: CGPoint
     let color: Color
     let type: EffectType
+}
+
+// Для отложенной реакции после предупреждения
+struct PendingReaction: Identifiable {
+    let id = UUID()
+    let reaction: ChemicalReaction
+    let aID: UUID
+    let bID: UUID
+    let aSymbol: String
+    let bSymbol: String
+    let aPos: CGPoint
+    let bPos: CGPoint
 }
