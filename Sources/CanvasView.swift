@@ -1,0 +1,248 @@
+import SwiftUI
+
+// MARK: - Бесконечный холст
+struct CanvasView: View {
+    @Binding var items: [WorldItem]
+    @Binding var effects: [EffectAnimation]
+    let canvasScale: CGFloat
+    let canvasOffset: CGSize
+    let screenSize: CGSize
+    let onMove: (UUID, CGPoint) -> Void
+    let onDragEnd: () -> Void
+    let onDelete: (UUID) -> Void
+
+    var body: some View {
+        ZStack {
+            // Сетка
+            GridCanvas(scale: canvasScale, offset: canvasOffset)
+                .allowsHitTesting(false)
+
+            // Предметы
+            ForEach($items) { $item in
+                DraggableItemView(
+                    item: $item,
+                    scale: canvasScale,
+                    onDragEnd: onDragEnd,
+                    onDelete: { onDelete(item.id) }
+                )
+                .position(
+                    x: screenSize.width / 2 + item.worldPosition.x * canvasScale + canvasOffset.width,
+                    y: screenSize.height / 2 + item.worldPosition.y * canvasScale + canvasOffset.height
+                )
+                .scaleEffect(canvasScale)
+                .zIndex(item.kind == .equation ? 5 : 10)
+            }
+
+            // Эффекты
+            ForEach(effects) { effect in
+                ReactionEffectView(effect: effect)
+                    .position(
+                        x: screenSize.width / 2 + effect.position.x * canvasScale + canvasOffset.width,
+                        y: screenSize.height / 2 + effect.position.y * canvasScale + canvasOffset.height
+                    )
+                    .scaleEffect(canvasScale)
+                    .allowsHitTesting(false)
+                    .zIndex(100)
+            }
+        }
+    }
+}
+
+// MARK: - Сетка на фоне
+struct GridCanvas: View {
+    let scale: CGFloat
+    let offset: CGSize
+
+    var body: some View {
+        Canvas { context, size in
+            let spacing: CGFloat = 50 * scale
+            guard spacing > 4 else { return }
+
+            let originX = size.width / 2 + offset.width
+            let originY = size.height / 2 + offset.height
+            let lineColor = Color(hex: "#1E293B").opacity(0.6)
+
+            // Вертикальные линии
+            var x = originX.truncatingRemainder(dividingBy: spacing)
+            if x < 0 { x += spacing }
+            while x < size.width {
+                var path = Path()
+                path.move(to: CGPoint(x: x, y: 0))
+                path.addLine(to: CGPoint(x: x, y: size.height))
+                context.stroke(path, with: .color(lineColor), lineWidth: 0.5)
+                x += spacing
+            }
+
+            // Горизонтальные линии
+            var y = originY.truncatingRemainder(dividingBy: spacing)
+            if y < 0 { y += spacing }
+            while y < size.height {
+                var path = Path()
+                path.move(to: CGPoint(x: 0, y: y))
+                path.addLine(to: CGPoint(x: size.width, y: y))
+                context.stroke(path, with: .color(lineColor), lineWidth: 0.5)
+                y += spacing
+            }
+        }
+    }
+}
+
+// MARK: - Перетаскиваемый предмет
+struct DraggableItemView: View {
+    @Binding var item: WorldItem
+    let scale: CGFloat
+    let onDragEnd: () -> Void
+    let onDelete: () -> Void
+
+    @State private var dragStart: CGPoint?
+
+    var body: some View {
+        Group {
+            if item.kind == .equation {
+                equationView
+            } else {
+                reagentView
+            }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 3)
+                .onChanged { value in
+                    if dragStart == nil { dragStart = item.worldPosition }
+                    let start = dragStart ?? item.worldPosition
+                    item.worldPosition = CGPoint(
+                        x: start.x + value.translation.width / scale,
+                        y: start.y + value.translation.height / scale
+                    )
+                }
+                .onEnded { _ in
+                    dragStart = nil
+                    onDragEnd()
+                }
+        )
+        .onTapGesture(count: 2) {
+            onDelete()
+        }
+    }
+
+    var reagentView: some View {
+        Text(item.symbol)
+            .font(.system(size: item.symbol.count > 3 ? 14 : (item.symbol.count > 2 ? 18 : 24), weight: .bold))
+            .foregroundColor(.white)
+            .minimumScaleFactor(0.4)
+            .lineLimit(1)
+            .padding(.horizontal, 6)
+            .frame(width: 72, height: 72)
+            .background(
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            gradient: Gradient(colors: [
+                                Color(hex: item.colorHex).opacity(0.95),
+                                Color(hex: item.colorHex).opacity(0.55)
+                            ]),
+                            center: .topLeading,
+                            startRadius: 4,
+                            endRadius: 65
+                        )
+                    )
+            )
+            .overlay(Circle().stroke(Color.white.opacity(0.55), lineWidth: 1.5))
+            .shadow(color: Color(hex: item.colorHex).opacity(0.7), radius: 12, x: 0, y: 4)
+    }
+
+    var equationView: some View {
+        Text(item.equationText ?? "")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color(hex: "#1E3A8A").opacity(0.92))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color(hex: "#60A5FA"), lineWidth: 1)
+            )
+            .shadow(color: Color(hex: "#3B82F6").opacity(0.6), radius: 8, x: 0, y: 2)
+            .fixedSize()
+    }
+}
+
+// MARK: - Анимация эффекта реакции
+struct ReactionEffectView: View {
+    let effect: EffectAnimation
+    @State private var animate = false
+
+    var body: some View {
+        ZStack {
+            if effect.type == .explosion || effect.type == .flash {
+                // Вспышка / взрыв
+                Circle()
+                    .fill(effect.color)
+                    .frame(width: 60, height: 60)
+                    .scaleEffect(animate ? 3.2 : 0.2)
+                    .opacity(animate ? 0 : 0.9)
+                    .animation(.easeOut(duration: 1.0), value: animate)
+                ForEach(0..<8, id: \.self) { i in
+                    let angle = Double(i) / 8 * 2 * Double.pi
+                    Circle()
+                        .fill(effect.color)
+                        .frame(width: 8, height: 8)
+                        .offset(
+                            x: animate ? CGFloat(cos(angle)) * 70 : 0,
+                            y: animate ? CGFloat(sin(angle)) * 70 : 0
+                        )
+                        .opacity(animate ? 0 : 1)
+                        .animation(.easeOut(duration: 1.0), value: animate)
+                }
+            } else if effect.type == .gas {
+                // Пузырьки газа вверх
+                ForEach(0..<8, id: \.self) { i in
+                    Circle()
+                        .fill(effect.color.opacity(0.75))
+                        .frame(width: 10, height: 10)
+                        .offset(
+                            x: CGFloat.random(in: -35...35),
+                            y: animate ? -90 : 0
+                        )
+                        .opacity(animate ? 0 : 1)
+                        .animation(.easeOut(duration: 1.4).delay(Double(i) * 0.08), value: animate)
+                }
+            } else if effect.type == .precipitateWhite ||
+                        effect.type == .precipitateBlue ||
+                        effect.type == .precipitateBrown ||
+                        effect.type == .precipitateYellow {
+                // Осадок падает вниз
+                ForEach(0..<10, id: \.self) { i in
+                    Circle()
+                        .fill(effect.color.opacity(0.8))
+                        .frame(width: 7, height: 7)
+                        .offset(
+                            x: CGFloat.random(in: -35...35),
+                            y: animate ? 70 : -10
+                        )
+                        .opacity(animate ? 0 : 1)
+                        .animation(.easeIn(duration: 1.3).delay(Double(i) * 0.05), value: animate)
+                }
+            } else if effect.type == .colorChange {
+                // Изменение цвета — пульсирующий круг
+                Circle()
+                    .fill(effect.color.opacity(0.6))
+                    .frame(width: 90, height: 90)
+                    .scaleEffect(animate ? 1.6 : 0.7)
+                    .opacity(animate ? 0 : 0.85)
+                    .animation(.easeOut(duration: 1.2), value: animate)
+            } else {
+                // Свечение / по умолчанию
+                Circle()
+                    .fill(effect.color.opacity(0.5))
+                    .frame(width: 80, height: 80)
+                    .scaleEffect(animate ? 1.7 : 0.6)
+                    .opacity(animate ? 0 : 0.8)
+                    .animation(.easeOut(duration: 1.2), value: animate)
+            }
+        }
+        .onAppear { animate = true }
+    }
+}
