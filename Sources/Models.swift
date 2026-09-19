@@ -43,7 +43,9 @@ struct Reagent: Identifiable, Hashable {
 enum ReagentGroup: String, CaseIterable { case elements = "Элементы"; case compounds = "Соединения"; case organic = "Органика" }
 
 enum EffectType {
-    case explosion, flash, gas
+    case explosion, flash
+    case gas          // дым поднимается
+    case liquid       // жидкость течёт вниз
     case precipitateWhite, precipitateBlue, precipitateBrown, precipitateYellow
     case colorChange, glow, none
 }
@@ -63,20 +65,17 @@ struct ChemicalReaction {
     }
 }
 
-// ВАЖНО: здесь есть duration с инициализатором
 struct EffectAnimation: Identifiable {
     let id: UUID
     let position: CGPoint
     let color: Color
     let type: EffectType
-    let duration: Double
 
-    init(id: UUID = UUID(), position: CGPoint, color: Color, type: EffectType, duration: Double = 15.0) {
+    init(id: UUID = UUID(), position: CGPoint, color: Color, type: EffectType) {
         self.id = id
         self.position = position
         self.color = color
         self.type = type
-        self.duration = duration
     }
 }
 
