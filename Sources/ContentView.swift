@@ -1,5 +1,8 @@
+import SwiftUI
+
 struct ContentView: View {
     @State private var mode: AppMode = .lab
+
     var body: some View {
         ZStack {
             if mode == .lab { LabView() }
@@ -14,12 +17,15 @@ struct ContentView: View {
                     Text("📝 ОГЭ").tag(AppMode.exam)
                     Text("✏️ Ред").tag(AppMode.editor)
                 }
-                .pickerStyle(.segmented).frame(width: 280)
-                .padding(.trailing, 16).padding(.top, 8)
+                .pickerStyle(.segmented)
+                .frame(width: 280)
+                .padding(.trailing, 16)
+                .padding(.top, 8)
             }
         }
     }
 }
+
 enum AppMode { case lab, exam, editor }
 
 // MARK: - РЕЖИМ ЛАБОРАТОРИИ
@@ -112,7 +118,8 @@ struct LabView: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white).padding(10)
                             .background(Color(hex: "#1E293B").opacity(0.9)).clipShape(Circle())
-                    }.padding(.trailing, 14).padding(.bottom, 14)
+                    }
+                    .padding(.trailing, 14).padding(.bottom, 14)
                 }
             }
         }
@@ -170,10 +177,8 @@ struct LabView: View {
                 let d = hypot(a.worldPosition.x - b.worldPosition.x, a.worldPosition.y - b.worldPosition.y)
                 guard d < th else { continue }
 
-                // Ключ пары (симметричный)
                 let key = [a.symbol, b.symbol].sorted().joined(separator: "+")
 
-                // 1. Ищем реакцию
                 if let r = ChemistryData.findReaction(a.symbol, b.symbol) {
                     if r.warning != nil {
                         pendingReaction = PendingReaction(reaction: r, aID: a.id, bID: b.id,
@@ -185,14 +190,13 @@ struct LabView: View {
                     }
                 }
 
-                // 2. Реакции нет — показываем окно один раз для этой пары
                 if !warnedPairs.contains(key) {
                     warnedPairs.insert(key)
                     let nameA = ChemistryData.findReagent(by: a.symbol)?.name ?? a.symbol
                     let nameB = ChemistryData.findReagent(by: b.symbol)?.name ?? b.symbol
                     noReactionInfo = NoReactionInfo(
                         title: "🤷 Реакция не найдена",
-                        message: "\(nameA) (\(a.symbol)) и \(nameB) (\(b.symbol)) не взаимодействуют друг с другом при обычных условиях.\n\nПопробуй соединить с другими веществами или проверь условия реакции (нагревание, катализатор, свет)."
+                        message: "\(nameA) (\(a.symbol)) и \(nameB) (\(b.symbol)) не взаимодействуют друг с другом при обычных условиях.\n\nПопробуй соединить с другими веществами или проверь условия реакции."
                     )
                     return
                 }
@@ -222,7 +226,9 @@ struct LabView: View {
         }
         showToast("⚗️ \(reaction.equation)")
         let eid = effect.id
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { withAnimation { effects.removeAll { $0.id == eid } } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+            withAnimation { effects.removeAll { $0.id == eid } }
+        }
     }
 }
 
@@ -502,7 +508,7 @@ struct IntroOverlay: View {
                     row(icon: "arrow.left.and.right", text: "Двигай холст одним пальцем, масштабируй двумя")
                     row(icon: "flame", text: "Соедини два реагента рядом — начнётся реакция")
                     row(icon: "hand.tap.fill", text: "Двойной тап по элементу — удалить")
-                    row(icon: "pencil.and.list.clipboard", text: "Режим «Экзамен» — тренировка ОГЭ")
+                    row(icon: "pencil.and.list.clipboard", text: "Режимы: Лаборатория, ОГЭ, Редактор")
                 }.padding(16).background(Color(hex: "#1E293B")).cornerRadius(16).padding(.horizontal, 8)
                 Button(action: onClose) {
                     Text("Начать").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
