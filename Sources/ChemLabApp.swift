@@ -18,8 +18,10 @@ struct RootView: View {
                 SplashView()
                     .transition(.opacity)
             } else {
-                ContentView()
-                    .transition(.opacity)
+                NavigationStack {
+                    ContentView()
+                }
+                .transition(.opacity)
             }
         }
         .preferredColorScheme(.dark)
@@ -41,7 +43,6 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            // Градиентный фон
             LinearGradient(
                 colors: [
                     Color(hex: "#0B1020"),
@@ -56,15 +57,12 @@ struct SplashView: View {
             VStack(spacing: 40) {
                 Spacer()
 
-                // Логотип сверху
                 Text("🧪 ХимЛаб")
                     .font(.system(size: 36, weight: .bold))
                     .foregroundColor(.white)
                     .shadow(color: Color(hex: "#3B82F6").opacity(0.6), radius: 20, x: 0, y: 0)
 
-                // Крутящееся колесико
                 ZStack {
-                    // Внешнее кольцо (пульсирует)
                     Circle()
                         .stroke(Color(hex: "#3B82F6").opacity(0.25), lineWidth: 4)
                         .frame(width: 80, height: 80)
@@ -72,7 +70,6 @@ struct SplashView: View {
                         .opacity(pulse ? 0.4 : 0.9)
                         .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: pulse)
 
-                    // Вращающаяся дуга
                     Circle()
                         .trim(from: 0.0, to: 0.75)
                         .stroke(
@@ -89,10 +86,10 @@ struct SplashView: View {
                         .frame(width: 80, height: 80)
                         .rotationEffect(Angle(degrees: rotation))
 
-                    // Внутренний круг с иконкой
                     Circle()
                         .fill(Color(hex: "#1E293B"))
                         .frame(width: 46, height: 46)
+
                     Text("⚗️")
                         .font(.system(size: 22))
                 }
@@ -105,7 +102,6 @@ struct SplashView: View {
 
                 Spacer()
 
-                // Надпись снизу
                 VStack(spacing: 10) {
                     HStack(spacing: 6) {
                         Text("Сделано с любовью")
