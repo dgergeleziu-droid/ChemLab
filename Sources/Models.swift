@@ -44,8 +44,8 @@ enum ReagentGroup: String, CaseIterable { case elements = "Элементы"; ca
 
 enum EffectType {
     case explosion, flash
-    case gas          // дым поднимается
-    case liquid       // жидкость течёт вниз
+    case gas
+    case liquid
     case precipitateWhite, precipitateBlue, precipitateBrown, precipitateYellow
     case colorChange, glow, none
 }
@@ -85,34 +85,4 @@ struct PendingReaction: Identifiable {
     let aID: UUID; let bID: UUID
     let aSymbol: String; let bSymbol: String
     let aPos: CGPoint; let bPos: CGPoint
-}
-
-// MARK: - ЭКЗАМЕН
-enum ExamTaskType: String, CaseIterable {
-    case singleChoice = "Выбор одного ответа"
-    case multipleChoice = "Выбор двух ответов"
-    case matching = "Установление соответствия"
-    case shortAnswer = "Краткий ответ"
-    case equationInput = "Написание уравнения"
-}
-
-struct ExamTask: Identifiable {
-    let id = UUID()
-    let number: Int
-    let type: ExamTaskType
-    let question: String
-    let options: [String]?
-    let correctAnswer: String
-    let explanation: String
-    let topic: String
-}
-
-struct ExamVariant { let id: UUID; let title: String; let tasks: [ExamTask] }
-
-struct ExamResult {
-    let totalTasks: Int
-    let correctCount: Int
-    let score: Int
-    let grade: Int
-    let details: [(taskNumber: Int, userAnswer: String, correct: String, isCorrect: Bool)]
 }
