@@ -2,7 +2,7 @@ name: ChemLab
 options:
   bundleIdPrefix: com.example
   deploymentTarget:
-    iOS: "15.0"
+    iOS: "16.0"
 targets:
   ChemLab:
     type: application
