@@ -206,7 +206,7 @@ struct LabView: View {
     }
 }
 
-// MARK: - РЕЖИМ ЭКЗАМЕНА (как sdamgia.ru)
+// MARK: - РЕЖИМ ЭКЗАМЕНА
 struct ExamView: View {
     @State private var variant: ExamVariant? = nil
     @State private var currentIndex: Int = 0
@@ -364,29 +364,30 @@ struct ExamView: View {
         showResult = true
     }
 
-    func resultView(result: ExamResult) -> some View {
+    // ⚠️ ПАРАМЕТР ПЕРЕИМЕНОВАН в 'res', чтобы не конфликтовать с @State var result
+    func resultView(result res: ExamResult) -> some View {
         ScrollView {
             VStack(spacing: 24) {
                 Text("📊 Результат").font(.system(size: 28, weight: .bold)).foregroundColor(.white)
                 HStack(spacing: 20) {
                     VStack {
-                        Text("\(result.correctCount)/\(result.totalTasks)")
+                        Text("\(res.correctCount)/\(res.totalTasks)")
                             .font(.system(size: 32, weight: .bold)).foregroundColor(Color(hex: "#3B82F6"))
                         Text("Верных").font(.system(size: 12)).foregroundColor(Color(hex: "#94A3B8"))
                     }
                     VStack {
-                        Text("\(result.score)").font(.system(size: 32, weight: .bold)).foregroundColor(Color(hex: "#F59E0B"))
+                        Text("\(res.score)").font(.system(size: 32, weight: .bold)).foregroundColor(Color(hex: "#F59E0B"))
                         Text("Баллов").font(.system(size: 12)).foregroundColor(Color(hex: "#94A3B8"))
                     }
                     VStack {
-                        Text("\(result.grade)").font(.system(size: 32, weight: .bold))
-                            .foregroundColor(result.grade >= 4 ? Color(hex: "#22C55E") : (result.grade == 3 ? Color(hex: "#F59E0B") : Color(hex: "#EF4444")))
+                        Text("\(res.grade)").font(.system(size: 32, weight: .bold))
+                            .foregroundColor(res.grade >= 4 ? Color(hex: "#22C55E") : (res.grade == 3 ? Color(hex: "#F59E0B") : Color(hex: "#EF4444")))
                         Text("Оценка").font(.system(size: 12)).foregroundColor(Color(hex: "#94A3B8"))
                     }
                 }.padding(20).background(RoundedRectangle(cornerRadius: 20).fill(Color(hex: "#1E293B")))
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Разбор заданий").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-                    ForEach(result.details, id: \.0) { d in
+                    ForEach(res.details, id: \.0) { d in
                         HStack(alignment: .top, spacing: 12) {
                             Image(systemName: d.3 ? "checkmark.circle.fill" : "xmark.circle.fill")
                                 .foregroundColor(d.3 ? Color(hex: "#22C55E") : Color(hex: "#EF4444"))
@@ -402,7 +403,9 @@ struct ExamView: View {
                     }
                 }.padding(.horizontal, 20)
                 Button {
-                    variant = nil; showResult = false; result = nil
+                    variant = nil
+                    showResult = false
+                    result = nil
                 } label: {
                     Text("Пройти заново").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
                         .frame(maxWidth: .infinity).padding(.vertical, 16)
