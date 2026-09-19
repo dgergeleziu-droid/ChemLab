@@ -2,10 +2,11 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var mode: AppMode = .lab
+    @State private var labIncoming: [String] = []
 
     var body: some View {
         ZStack {
-            if mode == .lab { LabView() }
+            if mode == .lab { LabView(incomingReagents: $labIncoming) }
             else if mode == .exam { ExamView() }
             else { EquationEditorView() }
         }
@@ -17,10 +18,14 @@ struct ContentView: View {
                     Text("📝 ОГЭ").tag(AppMode.exam)
                     Text("✏️ Ред").tag(AppMode.editor)
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 280)
-                .padding(.trailing, 16)
-                .padding(.top, 8)
+                .pickerStyle(.segmented).frame(width: 280)
+                .padding(.trailing, 16).padding(.top, 8)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openInLab)) { notif in
+            if let arr = notif.object as? [String] {
+                labIncoming = arr
+                mode = .lab
             }
         }
     }
@@ -28,8 +33,9 @@ struct ContentView: View {
 
 enum AppMode { case lab, exam, editor }
 
-// MARK: - РЕЖИМ ЛАБОРАТОРИИ
+// MARK: - ЛАБОРАТОРИЯ
 struct LabView: View {
+    @Binding var incomingReagents: [String]
     @State private var items: [WorldItem] = []
     @State private var effects: [EffectAnimation] = []
     @State private var canvasOffset: CGSize = .zero
@@ -43,6 +49,7 @@ struct LabView: View {
     @State private var pendingReaction: PendingReaction? = nil
     @State private var noReactionInfo: NoReactionInfo? = nil
     @State private var warnedPairs: Set<String> = []
+    @State private var reactingItems: Set<UUID> = []
 
     var body: some View {
         GeometryReader { geo in
@@ -62,8 +69,7 @@ struct LabView: View {
                             .padding(.horizontal, 20).padding(.vertical, 12)
                             .background(Color.black.opacity(0.85)).cornerRadius(20)
                             .padding(.horizontal, 24).padding(.bottom, 170)
-                    }
-                    .transition(.opacity)
+                    }.transition(.opacity)
                 }
                 if let nr = noReactionInfo {
                     NoReactionOverlay(info: nr) {
@@ -76,8 +82,18 @@ struct LabView: View {
             Alert(title: Text("⚠️ Осторожно!"),
                   message: Text(p.reaction.warning ?? "Небезопасная реакция."),
                   dismissButton: .default(Text("Понятно")) {
-                      applyReaction(reaction: p.reaction, aID: p.aID, bID: p.bID, aPos: p.aPos, bPos: p.bPos)
+                      applyReaction(reaction: p.reaction, aID: p.aID, bID: p.bID,
+                                    aPos: p.aPos, bPos: p.bPos)
                   })
+        }
+        .onChange(of: incomingReagents) { reagents in
+            guard !reagents.isEmpty else { return }
+            for sym in reagents {
+                let r = ChemistryData.findReagent(by: sym)
+                    ?? Reagent(symbol: sym, name: sym, colorHex: "#94A3B8", group: .elements)
+                addReagent(r)
+            }
+            incomingReagents = []
         }
     }
 
@@ -167,14 +183,20 @@ struct LabView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { withAnimation { toastMessage = nil } }
     }
 
+    // MARK: - ПРОВЕРКА РЕАКЦИЙ
     func checkReactions() {
         let th: CGFloat = 130
         let reagents = items.filter { $0.kind == .reagent }
+
         for i in 0..<reagents.count {
             let a = reagents[i]
+            if reactingItems.contains(a.id) { continue }
             for j in (i+1)..<reagents.count {
                 let b = reagents[j]
-                let d = hypot(a.worldPosition.x - b.worldPosition.x, a.worldPosition.y - b.worldPosition.y)
+                if reactingItems.contains(b.id) { continue }
+
+                let d = hypot(a.worldPosition.x - b.worldPosition.x,
+                              a.worldPosition.y - b.worldPosition.y)
                 guard d < th else { continue }
 
                 let key = [a.symbol, b.symbol].sorted().joined(separator: "+")
@@ -185,7 +207,8 @@ struct LabView: View {
                             aSymbol: a.symbol, bSymbol: b.symbol, aPos: a.worldPosition, bPos: b.worldPosition)
                         return
                     } else {
-                        applyReaction(reaction: r, aID: a.id, bID: b.id, aPos: a.worldPosition, bPos: b.worldPosition)
+                        applyReaction(reaction: r, aID: a.id, bID: b.id,
+                                      aPos: a.worldPosition, bPos: b.worldPosition)
                         return
                     }
                 }
@@ -204,30 +227,60 @@ struct LabView: View {
         }
     }
 
+    // MARK: - ЗАПУСК РЕАКЦИИ (элементы НЕ исчезают — сначала течёт продукт 15 сек)
     func applyReaction(reaction: ChemicalReaction, aID: UUID, bID: UUID, aPos: CGPoint, bPos: CGPoint) {
+
         let mx = (aPos.x + bPos.x) / 2
         let my = (aPos.y + bPos.y) / 2
-        var newItems: [WorldItem] = []
+
+        // Помечаем элементы как "реагирующие" — больше не сработают
+        reactingItems.insert(aID)
+        reactingItems.insert(bID)
+
+        // Создаём эффект-поток на 15 секунд
+        let effect = EffectAnimation(
+            position: CGPoint(x: mx, y: my),
+            color: Color(hex: reaction.effectColorHex),
+            type: reaction.effect,
+            duration: 15.0
+        )
+
+        withAnimation(.easeOut(duration: 0.3)) {
+            effects.append(effect)
+        }
+
+        // Показываем подсказку, что реакция идёт
+        showToast("⚗️ Идёт реакция... \(reaction.equation)")
+
+        // Готовим продукты заранее
+        var productItems: [WorldItem] = []
         for (i, sym) in reaction.products.enumerated() {
             let color = ChemistryData.findReagent(by: sym)?.colorHex ?? "#94A3B8"
             let name = reaction.productNames.indices.contains(i) ? reaction.productNames[i] : sym
-            newItems.append(WorldItem(symbol: sym, displayName: name,
-                worldPosition: CGPoint(x: mx + CGFloat(i) * 90, y: my + 70), kind: .product, colorHex: color))
+            productItems.append(WorldItem(symbol: sym, displayName: name,
+                worldPosition: CGPoint(x: mx + CGFloat(i) * 90, y: my + 70),
+                kind: .product, colorHex: color))
         }
-        newItems.append(WorldItem(symbol: "eq", displayName: "Уравнение",
-            worldPosition: CGPoint(x: mx, y: my - 90), kind: .equation,
-            colorHex: "#3B82F6", equationText: reaction.equation))
-        let effect = EffectAnimation(position: CGPoint(x: mx, y: my),
-            color: Color(hex: reaction.effectColorHex), type: reaction.effect)
-        withAnimation(.easeOut(duration: 0.3)) {
-            items.removeAll { $0.id == aID || $0.id == bID }
-            items.append(contentsOf: newItems)
-            effects.append(effect)
-        }
-        showToast("⚗️ \(reaction.equation)")
+        let equationItem = WorldItem(
+            symbol: "eq", displayName: "Уравнение",
+            worldPosition: CGPoint(x: mx, y: my - 90),
+            kind: .equation, colorHex: "#3B82F6",
+            equationText: reaction.equation
+        )
+
         let eid = effect.id
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-            withAnimation { effects.removeAll { $0.id == eid } }
+
+        // Через 15 секунд: убираем реагенты, поток, добавляем продукты
+        DispatchQueue.main.asyncAfter(deadline: .now() + effect.duration) {
+            withAnimation(.easeOut(duration: 0.5)) {
+                items.removeAll { $0.id == aID || $0.id == bID }
+                items.append(contentsOf: productItems)
+                items.append(equationItem)
+                effects.removeAll { $0.id == eid }
+            }
+            reactingItems.remove(aID)
+            reactingItems.remove(bID)
+            showToast("✓ Получено: \(reaction.products.joined(separator: " + "))")
         }
     }
 }
@@ -270,7 +323,7 @@ struct NoReactionOverlay: View {
     }
 }
 
-// MARK: - РЕЖИМ ЭКЗАМЕНА
+// MARK: - ЭКЗАМЕН (без изменений)
 struct ExamView: View {
     @State private var variant: ExamVariant? = nil
     @State private var currentIndex: Int = 0
@@ -285,13 +338,9 @@ struct ExamView: View {
             Color(hex: "#0B1020").ignoresSafeArea()
             VStack(spacing: 0) {
                 Color.clear.frame(height: 50)
-                if let v = variant, !showResult {
-                    examContent(variant: v)
-                } else if showResult, let r = result {
-                    resultView(result: r)
-                } else {
-                    startScreen
-                }
+                if let v = variant, !showResult { examContent(variant: v) }
+                else if showResult, let r = result { resultView(result: r) }
+                else { startScreen }
             }
         }
     }
@@ -416,7 +465,8 @@ struct ExamView: View {
         case 16...25: grade = 4
         default: grade = 5
         }
-        result = ExamResult(totalTasks: variant.tasks.count, correctCount: correct, score: score, grade: grade, details: details)
+        result = ExamResult(totalTasks: variant.tasks.count, correctCount: correct,
+                             score: score, grade: grade, details: details)
         showResult = true
     }
 
@@ -469,7 +519,7 @@ struct ExamView: View {
     }
 }
 
-// MARK: - Вспомогательные View
+// MARK: - Вспомогательные
 struct ReagentChip: View {
     let reagent: Reagent
     let action: () -> Void
@@ -506,7 +556,7 @@ struct IntroOverlay: View {
                     row(icon: "hand.tap", text: "Тапни по элементу внизу — он появится на холсте")
                     row(icon: "hand.draw", text: "Перетаскивай элементы пальцем")
                     row(icon: "arrow.left.and.right", text: "Двигай холст одним пальцем, масштабируй двумя")
-                    row(icon: "flame", text: "Соедини два реагента рядом — начнётся реакция")
+                    row(icon: "flame", text: "Соедини два реагента — из них потечёт продукт 15 сек")
                     row(icon: "hand.tap.fill", text: "Двойной тап по элементу — удалить")
                     row(icon: "pencil.and.list.clipboard", text: "Режимы: Лаборатория, ОГЭ, Редактор")
                 }.padding(16).background(Color(hex: "#1E293B")).cornerRadius(16).padding(.horizontal, 8)
