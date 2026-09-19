@@ -11,18 +11,37 @@ struct RevisionView: View {
                 Color.clear.frame(height: 50)
 
                 // Заголовок
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Повторение")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("Краткая шпаргалка по химии")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color(hex: "#94A3B8"))
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 20).padding(.vertical, 12)
+               HStack {
+    VStack(alignment: .leading, spacing: 2) {
+        Text("Повторение")
+            .font(.system(size: 22, weight: .bold))
+            .foregroundColor(.white)
+        Text("Шпаргалка и ИИ-помощник")
+            .font(.system(size: 12))
+            .foregroundColor(Color(hex: "#94A3B8"))
+    }
+    Spacer()
+    NavigationLink {
+        AIChatView()
+    } label: {
+        HStack(spacing: 5) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 13))
+            Text("ИИ")
+                .font(.system(size: 13, weight: .semibold))
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(
+            LinearGradient(
+                colors: [Color(hex: "#3B82F6"), Color(hex: "#8B5CF6")],
+                startPoint: .leading, endPoint: .trailing
+            )
+        )
+        .cornerRadius(20)
+    }
+}
+.padding(.horizontal, 20).padding(.vertical, 12)
 
                 // Вкладки 8/9/10
                 HStack(spacing: 8) {
