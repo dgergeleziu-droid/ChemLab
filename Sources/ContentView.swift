@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var mode: AppMode = .lab
-
     var body: some View {
         ZStack {
             if mode == .lab { LabView() } else { ExamView() }
@@ -14,15 +13,12 @@ struct ContentView: View {
                     Text("🧪 Лаборатория").tag(AppMode.lab)
                     Text("📝 Экзамен ОГЭ").tag(AppMode.exam)
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 260)
-                .padding(.trailing, 16)
-                .padding(.top, 8)
+                .pickerStyle(.segmented).frame(width: 260)
+                .padding(.trailing, 16).padding(.top, 8)
             }
         }
     }
 }
-
 enum AppMode { case lab, exam }
 
 // MARK: - РЕЖИМ ЛАБОРАТОРИИ
@@ -38,6 +34,8 @@ struct LabView: View {
     @State private var showIntro = true
     @State private var toastMessage: String? = nil
     @State private var pendingReaction: PendingReaction? = nil
+    @State private var noReactionInfo: NoReactionInfo? = nil
+    @State private var warnedPairs: Set<String> = []
 
     var body: some View {
         GeometryReader { geo in
@@ -49,7 +47,7 @@ struct LabView: View {
                     bottomPanel
                 }
                 if showIntro { IntroOverlay { withAnimation { showIntro = false } } }
-                if let msg = toastMessage {
+                if let msg = toastMessage, pendingReaction == nil, noReactionInfo == nil {
                     VStack {
                         Spacer()
                         Text(msg).font(.system(size: 14, weight: .semibold))
@@ -59,6 +57,11 @@ struct LabView: View {
                             .padding(.horizontal, 24).padding(.bottom, 170)
                     }
                     .transition(.opacity)
+                }
+                if let nr = noReactionInfo {
+                    NoReactionOverlay(info: nr) {
+                        withAnimation(.easeOut(duration: 0.2)) { noReactionInfo = nil }
+                    }.zIndex(200)
                 }
             }
         }
@@ -108,8 +111,7 @@ struct LabView: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white).padding(10)
                             .background(Color(hex: "#1E293B").opacity(0.9)).clipShape(Circle())
-                    }
-                    .padding(.trailing, 14).padding(.bottom, 14)
+                    }.padding(.trailing, 14).padding(.bottom, 14)
                 }
             }
         }
@@ -166,6 +168,11 @@ struct LabView: View {
                 let b = reagents[j]
                 let d = hypot(a.worldPosition.x - b.worldPosition.x, a.worldPosition.y - b.worldPosition.y)
                 guard d < th else { continue }
+
+                // Ключ пары (симметричный)
+                let key = [a.symbol, b.symbol].sorted().joined(separator: "+")
+
+                // 1. Ищем реакцию
                 if let r = ChemistryData.findReaction(a.symbol, b.symbol) {
                     if r.warning != nil {
                         pendingReaction = PendingReaction(reaction: r, aID: a.id, bID: b.id,
@@ -175,6 +182,18 @@ struct LabView: View {
                         applyReaction(reaction: r, aID: a.id, bID: b.id, aPos: a.worldPosition, bPos: b.worldPosition)
                         return
                     }
+                }
+
+                // 2. Реакции нет — показываем окно один раз для этой пары
+                if !warnedPairs.contains(key) {
+                    warnedPairs.insert(key)
+                    let nameA = ChemistryData.findReagent(by: a.symbol)?.name ?? a.symbol
+                    let nameB = ChemistryData.findReagent(by: b.symbol)?.name ?? b.symbol
+                    noReactionInfo = NoReactionInfo(
+                        title: "🤷 Реакция не найдена",
+                        message: "\(nameA) (\(a.symbol)) и \(nameB) (\(b.symbol)) не взаимодействуют друг с другом при обычных условиях.\n\nПопробуй соединить с другими веществами или проверь условия реакции (нагревание, катализатор, свет)."
+                    )
+                    return
                 }
             }
         }
@@ -203,6 +222,44 @@ struct LabView: View {
         showToast("⚗️ \(reaction.equation)")
         let eid = effect.id
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { withAnimation { effects.removeAll { $0.id == eid } } }
+    }
+}
+
+// MARK: - ОКНО "РЕАКЦИЯ НЕ НАЙДЕНА"
+struct NoReactionInfo: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+}
+
+struct NoReactionOverlay: View {
+    let info: NoReactionInfo
+    let onClose: () -> Void
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.65).ignoresSafeArea().onTapGesture { onClose() }
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle().fill(Color(hex: "#3B82F6").opacity(0.18)).frame(width: 80, height: 80)
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 42)).foregroundColor(Color(hex: "#3B82F6"))
+                }
+                Text(info.title).font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white).multilineTextAlignment(.center)
+                Text(info.message).font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color(hex: "#CBD5E1")).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true).lineSpacing(3)
+                Button(action: onClose) {
+                    Text("Ясно").font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white).frame(maxWidth: .infinity)
+                        .padding(.vertical, 13).background(Color(hex: "#3B82F6")).cornerRadius(12)
+                }.padding(.top, 4)
+            }
+            .padding(24)
+            .background(RoundedRectangle(cornerRadius: 22).fill(Color(hex: "#1E293B"))
+                .shadow(color: .black.opacity(0.5), radius: 24, x: 0, y: 12))
+            .padding(.horizontal, 28)
+        }
     }
 }
 
@@ -238,14 +295,10 @@ struct ExamView: View {
             Text("📝").font(.system(size: 80))
             Text("ОГЭ по химии").font(.system(size: 32, weight: .bold)).foregroundColor(.white)
             Text("Тренировочный вариант\nпо мотивам sdamgia.ru")
-                .font(.system(size: 16)).foregroundColor(Color(hex: "#94A3B8"))
-                .multilineTextAlignment(.center)
+                .font(.system(size: 16)).foregroundColor(Color(hex: "#94A3B8")).multilineTextAlignment(.center)
             Button {
                 variant = ExamData.generateVariant(count: 10)
-                currentIndex = 0
-                userAnswers = [:]
-                showResult = false
-                equationInput = ""
+                currentIndex = 0; userAnswers = [:]; showResult = false; equationInput = ""
             } label: {
                 Text("Начать тренировку").font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white).frame(maxWidth: .infinity).padding(.vertical, 16)
@@ -272,9 +325,7 @@ struct ExamView: View {
                         .foregroundColor(.white).fixedSize(horizontal: false, vertical: true)
                     if let opts = task.options {
                         ForEach(opts, id: \.self) { opt in
-                            Button {
-                                userAnswers[task.id] = opt
-                            } label: {
+                            Button { userAnswers[task.id] = opt } label: {
                                 HStack {
                                     Image(systemName: userAnswers[task.id] == opt ? "checkmark.circle.fill" : "circle")
                                         .foregroundColor(userAnswers[task.id] == opt ? Color(hex: "#3B82F6") : Color(hex: "#475569"))
@@ -329,9 +380,7 @@ struct ExamView: View {
                         currentIndex += 1
                         equationInput = userAnswers[variant.tasks[currentIndex].id] ?? ""
                         showExplanation = false
-                    } else {
-                        finishExam(variant: variant)
-                    }
+                    } else { finishExam(variant: variant) }
                 } label: {
                     Text(currentIndex < variant.tasks.count - 1 ? "Далее →" : "Завершить")
                         .font(.system(size: 15, weight: .bold)).foregroundColor(.white)
@@ -364,7 +413,6 @@ struct ExamView: View {
         showResult = true
     }
 
-    // ⚠️ ПАРАМЕТР ПЕРЕИМЕНОВАН в 'res', чтобы не конфликтовать с @State var result
     func resultView(result res: ExamResult) -> some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -403,15 +451,12 @@ struct ExamView: View {
                     }
                 }.padding(.horizontal, 20)
                 Button {
-                    variant = nil
-                    showResult = false
-                    result = nil
+                    variant = nil; showResult = false; result = nil
                 } label: {
                     Text("Пройти заново").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
                         .frame(maxWidth: .infinity).padding(.vertical, 16)
                         .background(Color(hex: "#3B82F6")).cornerRadius(14)
-                }
-                .padding(.horizontal, 20).padding(.bottom, 40)
+                }.padding(.horizontal, 20).padding(.bottom, 40)
             }.padding(.top, 20)
         }
     }
