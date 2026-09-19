@@ -65,7 +65,6 @@ struct LabView: View {
                 }
                 if showIntro { IntroOverlay { withAnimation { showIntro = false } } }
 
-                // Верхняя строка: чипы активных условий + кнопка "условия"
                 VStack {
                     HStack(spacing: 6) {
                         conditionsBadges
@@ -247,7 +246,6 @@ struct LabView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { withAnimation { toastMessage = nil } }
     }
 
-    // MARK: - ПРОВЕРКА РЕАКЦИЙ (с учётом условий)
     func checkReactions() {
         let th: CGFloat = 130
         let reagents = items.filter { $0.kind == .reagent }
@@ -266,13 +264,10 @@ struct LabView: View {
                 let key = [a.symbol, b.symbol].sorted().joined(separator: "+")
 
                 if let r = ChemistryData.findReaction(a.symbol, b.symbol) {
-
-                    // Проверяем условия
                     let needed = r.requiredConditions
                     let missing = needed.subtracting(activeConditions)
 
                     if !missing.isEmpty {
-                        // Условий не хватает — показываем подсказку
                         let alreadyWarned = warnedPairs.contains("cond_" + key)
                         if !alreadyWarned {
                             warnedPairs.insert("cond_" + key)
@@ -280,14 +275,13 @@ struct LabView: View {
                             let nameB = ChemistryData.findReagent(by: b.symbol)?.name ?? b.symbol
                             conditionsInfo = ConditionsInfo(
                                 title: "⚙️ Нужны другие условия",
-                                message: "\(nameA) и \(nameB) могут реагировать, но для этого нужны особые условия.\n\nНе хватает: \(missing.map { $0.rawValue }.joined(separator: ", ")).\n\nОткрой панель «Условия» и включи их, затем снова соедини вещества.",
+                                message: "\(nameA) и \(nameB) могут реагировать, но нужны особые условия.\n\nНе хватает: \(missing.map { $0.rawValue }.joined(separator: ", ")).\n\nОткрой панель «Условия», включи их и снова соедини вещества.",
                                 missing: missing
                             )
                         }
                         return
                     }
 
-                    // Условия выполнены — идём дальше
                     if r.warning != nil {
                         pendingReaction = PendingReaction(reaction: r, aID: a.id, bID: b.id,
                             aSymbol: a.symbol, bSymbol: b.symbol, aPos: a.worldPosition, bPos: b.worldPosition)
@@ -299,14 +293,13 @@ struct LabView: View {
                     }
                 }
 
-                // Реакции нет вообще
                 if !warnedPairs.contains(key) {
                     warnedPairs.insert(key)
                     let nameA = ChemistryData.findReagent(by: a.symbol)?.name ?? a.symbol
                     let nameB = ChemistryData.findReagent(by: b.symbol)?.name ?? b.symbol
                     noReactionInfo = NoReactionInfo(
                         title: "🚫 Реакции нет",
-                        message: "\(nameA) (\(a.symbol)) и \(nameB) (\(b.symbol)) не взаимодействуют друг с другом ни при каких обычных условиях.\n\nПодсказка: проверь формулы и убедись, что эти вещества в принципе могут реагировать."
+                        message: "\(nameA) (\(a.symbol)) и \(nameB) (\(b.symbol)) не взаимодействуют друг с другом ни при каких обычных условиях.\n\nПроверь формулы и убедись, что эти вещества в принципе могут реагировать."
                     )
                     return
                 }
@@ -320,11 +313,11 @@ struct LabView: View {
         reactingItems.insert(aID)
         reactingItems.insert(bID)
 
+        // ⚠️ Без параметра duration — используется значение по умолчанию из Models.swift
         let effect = EffectAnimation(
             position: CGPoint(x: mx, y: my),
             color: Color(hex: reaction.effectColorHex),
-            type: reaction.effect,
-            duration: 15.0
+            type: reaction.effect
         )
         withAnimation(.easeOut(duration: 0.3)) { effects.append(effect) }
         showToast("⚗️ Идёт реакция... \(reaction.equation)")
@@ -343,7 +336,7 @@ struct LabView: View {
             kind: .equation, colorHex: "#3B82F6", equationText: reaction.equation
         )
         let eid = effect.id
-        DispatchQueue.main.asyncAfter(deadline: .now() + effect.duration) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) {
             withAnimation(.easeOut(duration: 0.5)) {
                 items.removeAll { $0.id == aID || $0.id == bID }
                 items.append(contentsOf: productItems)
@@ -444,7 +437,6 @@ struct NoReactionOverlay: View {
     }
 }
 
-// Окно "нужны другие условия"
 struct ConditionsInfo: Identifiable {
     let id = UUID()
     let title: String
