@@ -374,10 +374,12 @@ struct LabView: View {
         }
     }
 
+    // Мгновенное соединение + реалистичный эффект по продукту
     func applyReaction(reaction: ChemicalReaction, aID: UUID, bID: UUID, aPos: CGPoint, bPos: CGPoint) {
         let mx = (aPos.x + bPos.x) / 2
         let my = (aPos.y + bPos.y) / 2
 
+        // Продукты
         var newItems: [WorldItem] = []
         for (i, sym) in reaction.products.enumerated() {
             let color = ChemistryData.findReagent(by: sym)?.colorHex ?? "#94A3B8"
@@ -392,10 +394,33 @@ struct LabView: View {
             kind: .equation, colorHex: "#3B82F6", equationText: reaction.equation
         )
 
+        // Определяем эффект по продуктам
+        let gasSymbols: Set<String> = ["H2","O2","N2","Cl2","F2","CO2","SO2","SO3",
+                                       "NO","NO2","NH3","H2S","CH4","C2H2","CO",
+                                       "PH3","SiH4","AsH3","H2Se","H2Te","SbH3","B2H6"]
+        let liquidSymbols: Set<String> = ["H2O","H2SO4","HNO3","HCl","C2H5OH","CH3OH",
+                                          "H2CO3","HBr","HI","H3PO4"]
+
+        var effectType: EffectType = reaction.effect
+        var effectColorHex = reaction.effectColorHex
+
+        for p in reaction.products {
+            if liquidSymbols.contains(p) {
+                effectType = .liquid
+                if let r = ChemistryData.findReagent(by: p) { effectColorHex = r.colorHex }
+                break
+            }
+            if gasSymbols.contains(p) {
+                effectType = .gas
+                if let r = ChemistryData.findReagent(by: p) { effectColorHex = r.colorHex }
+                break
+            }
+        }
+
         let effect = EffectAnimation(
             position: CGPoint(x: mx, y: my + 50),
-            color: Color(hex: reaction.effectColorHex),
-            type: reaction.effect
+            color: Color(hex: effectColorHex),
+            type: effectType
         )
 
         withAnimation(.easeOut(duration: 0.3)) {
