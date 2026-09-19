@@ -120,7 +120,7 @@ struct ContentView: View {
                 canvasScale: canvasScale,
                 canvasOffset: canvasOffset,
                 screenSize: size,
-                onMove: { _ in },
+                onMove: { _, _ in },
                 onDragEnd: { checkReactions() },
                 onDelete: { id in
                     withAnimation { items.removeAll { $0.id == id } }
@@ -314,8 +314,12 @@ struct ContentView: View {
             effects.append(contentsOf: newEffects)
         }
 
+        // Запоминаем ID новых эффектов, чтобы удалить только их
+        let newEffectIDs = Set(newEffects.map { $0.id })
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-            withAnimation { effects.removeAll { newEffects.contains($0) } }
+            withAnimation {
+                effects.removeAll(where: { newEffectIDs.contains($0.id) })
+            }
         }
     }
 }
