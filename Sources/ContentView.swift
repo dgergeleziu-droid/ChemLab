@@ -8,10 +8,14 @@ struct ContentView: View {
     @State private var lastCanvasOffset: CGSize = .zero
     @State private var canvasScale: CGFloat = 1.0
     @State private var lastCanvasScale: CGFloat = 1.0
+    @State private var isDraggingItem = false
 
     @State private var selectedGroup: ReagentGroup = .elements
     @State private var showIntro = true
     @State private var toastMessage: String? = nil
+
+    // Ожидающая реакция, которая покажет предупреждение
+    @State private var pendingReaction: PendingReaction? = nil
 
     var body: some View {
         GeometryReader { geo in
@@ -45,6 +49,23 @@ struct ContentView: View {
                     .transition(.opacity)
                 }
             }
+        }
+        // Алерт с предупреждением о неправильном действии
+        .alert(item: $pendingReaction) { pending in
+            Alert(
+                title: Text("⚠️ Осторожно!"),
+                message: Text(pending.reaction.warning ?? "Небезопасная реакция."),
+                dismissButton: .default(Text("Понятно")) {
+                    // После закрытия алерта — выполняем реакцию
+                    applyReaction(
+                        reaction: pending.reaction,
+                        aID: pending.aID,
+                        bID: pending.bID,
+                        aPos: pending.aPos,
+                        bPos: pending.bPos
+                    )
+                }
+            )
         }
     }
 
@@ -86,21 +107,23 @@ struct ContentView: View {
         .background(Color(hex: "#0F172A"))
     }
 
-    // MARK: - Область холста
+    // MARK: - Холст
     func canvasArea(size: CGSize) -> some View {
         ZStack {
             Color.clear
                 .contentShape(Rectangle())
                 .gesture(
                     SimultaneousGesture(
-                        DragGesture()
+                        DragGesture(minimumDistance: 1, coordinateSpace: .local)
                             .onChanged { value in
+                                guard !isDraggingItem else { return }
                                 canvasOffset = CGSize(
                                     width: lastCanvasOffset.width + value.translation.width,
                                     height: lastCanvasOffset.height + value.translation.height
                                 )
                             }
                             .onEnded { _ in
+                                guard !isDraggingItem else { return }
                                 lastCanvasOffset = canvasOffset
                             },
                         MagnificationGesture()
@@ -120,14 +143,15 @@ struct ContentView: View {
                 canvasScale: canvasScale,
                 canvasOffset: canvasOffset,
                 screenSize: size,
-                onMove: { _, _ in },
                 onDragEnd: { checkReactions() },
                 onDelete: { id in
                     withAnimation { items.removeAll { $0.id == id } }
+                },
+                onItemDragChange: { dragging in
+                    isDraggingItem = dragging
                 }
             )
 
-            // Кнопка сброса масштаба
             VStack {
                 Spacer()
                 HStack {
@@ -154,10 +178,9 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Нижняя панель с реагентами
+    // MARK: - Нижняя панель
     var bottomPanel: some View {
         VStack(spacing: 8) {
-            // Группы
             HStack(spacing: 8) {
                 ForEach(ReagentGroup.allCases, id: \.self) { group in
                     Button {
@@ -184,7 +207,6 @@ struct ContentView: View {
             .padding(.horizontal, 12)
             .padding(.top, 10)
 
-            // Список реагентов
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(ChemistryData.reagents.filter { $0.group == selectedGroup }) { reagent in
@@ -200,12 +222,11 @@ struct ContentView: View {
         .background(Color(hex: "#0F172A"))
     }
 
-    // MARK: - Логика
+    // MARK: - Логика добавления
     func addReagent(_ reagent: Reagent) {
         let randomX = CGFloat.random(in: -80...80)
         let randomY = CGFloat.random(in: -60...60)
 
-        // переводим экранные координаты в мировые
         let worldX = (randomX - canvasOffset.width) / canvasScale
         let worldY = (randomY - canvasOffset.height) / canvasScale
 
@@ -231,21 +252,14 @@ struct ContentView: View {
 
     // MARK: - Проверка реакций
     func checkReactions() {
-        let proximityThreshold: CGFloat = 90
-
-        var reacted: Set<UUID> = []
-        var newItems: [WorldItem] = []
-        var newEffects: [EffectAnimation] = []
+        let proximityThreshold: CGFloat = 130
 
         let reagentItems = items.filter { $0.kind == .reagent }
 
         for i in 0..<reagentItems.count {
             let a = reagentItems[i]
-            if reacted.contains(a.id) { continue }
-
             for j in (i+1)..<reagentItems.count {
                 let b = reagentItems[j]
-                if reacted.contains(b.id) { continue }
 
                 let dx = a.worldPosition.x - b.worldPosition.x
                 let dy = a.worldPosition.y - b.worldPosition.y
@@ -253,72 +267,93 @@ struct ContentView: View {
 
                 if distance < proximityThreshold {
                     if let reaction = ChemistryData.findReaction(a.symbol, b.symbol) {
-                        reacted.insert(a.id)
-                        reacted.insert(b.id)
 
-                        let midX = (a.worldPosition.x + b.worldPosition.x) / 2
-                        let midY = (a.worldPosition.y + b.worldPosition.y) / 2
-
-                        // Продукт(ы)
-                        for (index, productSymbol) in reaction.products.enumerated() {
-                            let productColor = ChemistryData.findReagent(by: productSymbol)?.colorHex ?? "#94A3B8"
-                            let productName = reaction.productNames.indices.contains(index)
-                                ? reaction.productNames[index]
-                                : productSymbol
-
-                            let productItem = WorldItem(
-                                symbol: productSymbol,
-                                displayName: productName,
-                                worldPosition: CGPoint(
-                                    x: midX + CGFloat(index) * 90,
-                                    y: midY + 70
-                                ),
-                                kind: .product,
-                                colorHex: productColor
+                        if let _ = reaction.warning {
+                            // Есть предупреждение — показываем алерт
+                            pendingReaction = PendingReaction(
+                                reaction: reaction,
+                                aID: a.id,
+                                bID: b.id,
+                                aSymbol: a.symbol,
+                                bSymbol: b.symbol,
+                                aPos: a.worldPosition,
+                                bPos: b.worldPosition
                             )
-                            newItems.append(productItem)
+                            return
+                        } else {
+                            // Нет предупреждения — применяем сразу
+                            applyReaction(
+                                reaction: reaction,
+                                aID: a.id,
+                                bID: b.id,
+                                aPos: a.worldPosition,
+                                bPos: b.worldPosition
+                            )
+                            return
                         }
-
-                        // Уравнение
-                        let equationItem = WorldItem(
-                            symbol: "eq",
-                            displayName: "Уравнение",
-                            worldPosition: CGPoint(x: midX, y: midY - 90),
-                            kind: .equation,
-                            colorHex: "#3B82F6",
-                            equationText: reaction.equation
-                        )
-                        newItems.append(equationItem)
-
-                        // Эффект
-                        newEffects.append(
-                            EffectAnimation(
-                                position: CGPoint(x: midX, y: midY),
-                                color: Color(hex: reaction.effectColorHex),
-                                type: reaction.effect
-                            )
-                        )
-
-                        showToast("⚗️ \(reaction.equation)")
-                        break
                     }
                 }
             }
         }
+    }
 
-        guard !reacted.isEmpty else { return }
+    // MARK: - Применение реакции
+    func applyReaction(reaction: ChemicalReaction,
+                       aID: UUID, bID: UUID,
+                       aPos: CGPoint, bPos: CGPoint) {
 
-        withAnimation(.easeOut(duration: 0.3)) {
-            items.removeAll { reacted.contains($0.id) }
-            items.append(contentsOf: newItems)
-            effects.append(contentsOf: newEffects)
+        let midX = (aPos.x + bPos.x) / 2
+        let midY = (aPos.y + bPos.y) / 2
+
+        var newItems: [WorldItem] = []
+
+        for (index, productSymbol) in reaction.products.enumerated() {
+            let productColor = ChemistryData.findReagent(by: productSymbol)?.colorHex ?? "#94A3B8"
+            let productName = reaction.productNames.indices.contains(index)
+                ? reaction.productNames[index]
+                : productSymbol
+
+            let productItem = WorldItem(
+                symbol: productSymbol,
+                displayName: productName,
+                worldPosition: CGPoint(
+                    x: midX + CGFloat(index) * 90,
+                    y: midY + 70
+                ),
+                kind: .product,
+                colorHex: productColor
+            )
+            newItems.append(productItem)
         }
 
-        // Запоминаем ID новых эффектов, чтобы удалить только их
-        let newEffectIDs = Set(newEffects.map { $0.id })
+        let equationItem = WorldItem(
+            symbol: "eq",
+            displayName: "Уравнение",
+            worldPosition: CGPoint(x: midX, y: midY - 90),
+            kind: .equation,
+            colorHex: "#3B82F6",
+            equationText: reaction.equation
+        )
+        newItems.append(equationItem)
+
+        let effect = EffectAnimation(
+            position: CGPoint(x: midX, y: midY),
+            color: Color(hex: reaction.effectColorHex),
+            type: reaction.effect
+        )
+
+        withAnimation(.easeOut(duration: 0.3)) {
+            items.removeAll { $0.id == aID || $0.id == bID }
+            items.append(contentsOf: newItems)
+            effects.append(effect)
+        }
+
+        showToast("⚗️ \(reaction.equation)")
+
+        let effectID = effect.id
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
             withAnimation {
-                effects.removeAll(where: { newEffectIDs.contains($0.id) })
+                effects.removeAll(where: { $0.id == effectID })
             }
         }
     }
@@ -388,7 +423,7 @@ struct IntroOverlay: View {
                     introRow(icon: "hand.draw", text: "Перетаскивай элементы пальцем")
                     introRow(icon: "arrow.left.and.right", text: "Двигай холст одним пальцем, масштабируй двумя")
                     introRow(icon: "flame", text: "Соедини два реагента рядом — начнётся реакция")
-                    introRow(icon: "text.alignleft", text: "Уравнение реакции тоже можно двигать")
+                    introRow(icon: "exclamationmark.triangle", text: "Если реакция опасна — увидишь предупреждение")
                     introRow(icon: "hand.tap.fill", text: "Двойной тап по элементу — удалить")
                 }
                 .padding(16)
