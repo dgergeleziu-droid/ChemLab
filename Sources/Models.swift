@@ -31,7 +31,9 @@ struct WorldItem: Identifiable, Equatable {
         self.worldPosition = worldPosition; self.kind = kind
         self.colorHex = colorHex; self.equationText = equationText
     }
-    static func == (lhs: WorldItem, rhs: WorldItem) -> Bool { lhs.id == rhs.id && lhs.worldPosition == rhs.worldPosition }
+    static func == (lhs: WorldItem, rhs: WorldItem) -> Bool {
+        lhs.id == rhs.id && lhs.worldPosition == rhs.worldPosition
+    }
 }
 
 struct Reagent: Identifiable, Hashable {
@@ -40,26 +42,53 @@ struct Reagent: Identifiable, Hashable {
 }
 enum ReagentGroup: String, CaseIterable { case elements = "Элементы"; case compounds = "Соединения"; case organic = "Органика" }
 
-enum EffectType { case explosion, flash, gas, precipitateWhite, precipitateBlue, precipitateBrown, precipitateYellow, colorChange, glow, none }
+enum EffectType {
+    case explosion, flash, gas
+    case precipitateWhite, precipitateBlue, precipitateBrown, precipitateYellow
+    case colorChange, glow, none
+}
 
 struct ChemicalReaction {
-    let reagents: Set<String>; let products: [String]; let productNames: [String]
-    let equation: String; let effect: EffectType; let effectColorHex: String; let warning: String?
+    let reagents: Set<String>
+    let products: [String]
+    let productNames: [String]
+    let equation: String
+    let effect: EffectType
+    let effectColorHex: String
+    let warning: String?
     init(reagents: Set<String>, products: [String], productNames: [String], equation: String, effect: EffectType, effectColorHex: String, warning: String? = nil) {
         self.reagents = reagents; self.products = products; self.productNames = productNames
-        self.equation = equation; self.effect = effect; self.effectColorHex = effectColorHex; self.warning = warning
+        self.equation = equation; self.effect = effect
+        self.effectColorHex = effectColorHex; self.warning = warning
     }
 }
 
-struct EffectAnimation: Identifiable { let id = UUID(); let position: CGPoint; let color: Color; let type: EffectType }
+// ВАЖНО: здесь есть duration с инициализатором
+struct EffectAnimation: Identifiable {
+    let id: UUID
+    let position: CGPoint
+    let color: Color
+    let type: EffectType
+    let duration: Double
+
+    init(id: UUID = UUID(), position: CGPoint, color: Color, type: EffectType, duration: Double = 15.0) {
+        self.id = id
+        self.position = position
+        self.color = color
+        self.type = type
+        self.duration = duration
+    }
+}
 
 struct PendingReaction: Identifiable {
-    let id = UUID(); let reaction: ChemicalReaction
-    let aID: UUID; let bID: UUID; let aSymbol: String; let bSymbol: String
+    let id = UUID()
+    let reaction: ChemicalReaction
+    let aID: UUID; let bID: UUID
+    let aSymbol: String; let bSymbol: String
     let aPos: CGPoint; let bPos: CGPoint
 }
 
-// MARK: - МОДЕЛИ ДЛЯ ЭКЗАМЕНА (как на sdamgia.ru)
+// MARK: - ЭКЗАМЕН
 enum ExamTaskType: String, CaseIterable {
     case singleChoice = "Выбор одного ответа"
     case multipleChoice = "Выбор двух ответов"
@@ -79,11 +108,7 @@ struct ExamTask: Identifiable {
     let topic: String
 }
 
-struct ExamVariant {
-    let id: UUID
-    let title: String
-    let tasks: [ExamTask]
-}
+struct ExamVariant { let id: UUID; let title: String; let tasks: [ExamTask] }
 
 struct ExamResult {
     let totalTasks: Int
