@@ -1,25 +1,26 @@
-import SwiftUI
-
 struct ContentView: View {
     @State private var mode: AppMode = .lab
     var body: some View {
         ZStack {
-            if mode == .lab { LabView() } else { ExamView() }
+            if mode == .lab { LabView() }
+            else if mode == .exam { ExamView() }
+            else { EquationEditorView() }
         }
         .overlay(alignment: .top) {
             HStack {
                 Spacer()
                 Picker("Режим", selection: $mode) {
-                    Text("🧪 Лаборатория").tag(AppMode.lab)
-                    Text("📝 Экзамен ОГЭ").tag(AppMode.exam)
+                    Text("🧪 Лаб").tag(AppMode.lab)
+                    Text("📝 ОГЭ").tag(AppMode.exam)
+                    Text("✏️ Ред").tag(AppMode.editor)
                 }
-                .pickerStyle(.segmented).frame(width: 260)
+                .pickerStyle(.segmented).frame(width: 280)
                 .padding(.trailing, 16).padding(.top, 8)
             }
         }
     }
 }
-enum AppMode { case lab, exam }
+enum AppMode { case lab, exam, editor }
 
 // MARK: - РЕЖИМ ЛАБОРАТОРИИ
 struct LabView: View {
