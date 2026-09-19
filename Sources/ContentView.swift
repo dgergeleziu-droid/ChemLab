@@ -8,6 +8,7 @@ struct ContentView: View {
         ZStack {
             if mode == .lab { LabView(incomingReagents: $labIncoming) }
             else if mode == .exam { ExamView() }
+            else if mode == .revision { RevisionView() }
             else { EquationEditorView() }
         }
         .overlay(alignment: .top) {
@@ -16,9 +17,10 @@ struct ContentView: View {
                 Picker("Режим", selection: $mode) {
                     Text("🧪 Лаб").tag(AppMode.lab)
                     Text("📝 ОГЭ").tag(AppMode.exam)
+                    Text("📖 Теория").tag(AppMode.revision)
                     Text("✏️ Ред").tag(AppMode.editor)
                 }
-                .pickerStyle(.segmented).frame(width: 260)
+                .pickerStyle(.segmented).frame(width: 320)
                 .padding(.trailing, 16).padding(.top, 8)
             }
         }
@@ -31,7 +33,7 @@ struct ContentView: View {
     }
 }
 
-enum AppMode { case lab, exam, editor }
+enum AppMode { case lab, exam, revision, editor }
 
 // MARK: - ЛАБОРАТОРИЯ
 struct LabView: View {
