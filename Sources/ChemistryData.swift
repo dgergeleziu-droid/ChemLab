@@ -2,269 +2,417 @@ import SwiftUI
 
 enum ChemistryData {
 
+    // MARK: - ВСЕ РЕАГЕНТЫ
     static let reagents: [Reagent] = [
-        // Элементы
-        Reagent(symbol: "H",   name: "Водород",        colorHex: "#FF6B6B", group: .elements),
-        Reagent(symbol: "O",   name: "Кислород",       colorHex: "#EF4444", group: .elements),
-        Reagent(symbol: "C",   name: "Углерод",        colorHex: "#4B5563", group: .elements),
-        Reagent(symbol: "N",   name: "Азот",           colorHex: "#3B82F6", group: .elements),
+        // ============ МЕТАЛЛЫ ============
+        Reagent(symbol: "Li",  name: "Литий",          colorHex: "#F472B6", group: .elements),
         Reagent(symbol: "Na",  name: "Натрий",         colorHex: "#F97316", group: .elements),
         Reagent(symbol: "K",   name: "Калий",          colorHex: "#EA580C", group: .elements),
-        Reagent(symbol: "Ca",  name: "Кальций",        colorHex: "#FCD34D", group: .elements),
         Reagent(symbol: "Mg",  name: "Магний",         colorHex: "#FACC15", group: .elements),
+        Reagent(symbol: "Ca",  name: "Кальций",        colorHex: "#FCD34D", group: .elements),
+        Reagent(symbol: "Ba",  name: "Барий",          colorHex: "#22D3EE", group: .elements),
         Reagent(symbol: "Al",  name: "Алюминий",       colorHex: "#9CA3AF", group: .elements),
         Reagent(symbol: "Fe",  name: "Железо",         colorHex: "#B45309", group: .elements),
         Reagent(symbol: "Cu",  name: "Медь",           colorHex: "#EA580C", group: .elements),
         Reagent(symbol: "Zn",  name: "Цинк",           colorHex: "#94A3B8", group: .elements),
+        Reagent(symbol: "Ag",  name: "Серебро",        colorHex: "#CBD5E1", group: .elements),
+        Reagent(symbol: "Pb",  name: "Свинец",         colorHex: "#64748B", group: .elements),
+        Reagent(symbol: "Mn",  name: "Марганец",       colorHex: "#7E22CE", group: .elements),
+        Reagent(symbol: "Hg",  name: "Ртуть",          colorHex: "#A1A1AA", group: .elements),
+
+        // ============ НЕМЕТАЛЛЫ ============
+        Reagent(symbol: "H",   name: "Водород",        colorHex: "#FF6B6B", group: .elements),
+        Reagent(symbol: "C",   name: "Углерод",        colorHex: "#4B5563", group: .elements),
+        Reagent(symbol: "N",   name: "Азот",           colorHex: "#3B82F6", group: .elements),
+        Reagent(symbol: "O",   name: "Кислород",       colorHex: "#EF4444", group: .elements),
+        Reagent(symbol: "F",   name: "Фтор",           colorHex: "#22C55E", group: .elements),
+        Reagent(symbol: "Si",  name: "Кремний",        colorHex: "#78716C", group: .elements),
+        Reagent(symbol: "P",   name: "Фосфор",         colorHex: "#F97316", group: .elements),
         Reagent(symbol: "S",   name: "Сера",           colorHex: "#FACC15", group: .elements),
         Reagent(symbol: "Cl",  name: "Хлор",           colorHex: "#4ADE80", group: .elements),
         Reagent(symbol: "Br",  name: "Бром",           colorHex: "#B91C1C", group: .elements),
         Reagent(symbol: "I",   name: "Иод",            colorHex: "#7C3AED", group: .elements),
-        Reagent(symbol: "P",   name: "Фосфор",         colorHex: "#F97316", group: .elements),
-        Reagent(symbol: "Ag",  name: "Серебро",        colorHex: "#CBD5E1", group: .elements),
-        Reagent(symbol: "Ba",  name: "Барий",          colorHex: "#22D3EE", group: .elements),
 
-        // Соединения
+        // ============ ОКСИДЫ ============
         Reagent(symbol: "H2O",     name: "Вода",              colorHex: "#60A5FA", group: .compounds),
-        Reagent(symbol: "HCl",     name: "Соляная кислота",   colorHex: "#FCD34D", group: .compounds),
-        Reagent(symbol: "H2SO4",   name: "Серная кислота",    colorHex: "#FBBF24", group: .compounds),
+        Reagent(symbol: "Na2O",    name: "Оксид натрия",      colorHex: "#FDBA74", group: .compounds),
+        Reagent(symbol: "K2O",     name: "Оксид калия",       colorHex: "#FDBA74", group: .compounds),
+        Reagent(symbol: "CaO",     name: "Оксид кальция",     colorHex: "#FDE68A", group: .compounds),
+        Reagent(symbol: "MgO",     name: "Оксид магния",      colorHex: "#FEF08A", group: .compounds),
+        Reagent(symbol: "Al2O3",   name: "Оксид алюминия",    colorHex: "#D4D4D8", group: .compounds),
+        Reagent(symbol: "Fe2O3",   name: "Оксид железа(III)", colorHex: "#92400E", group: .compounds),
+        Reagent(symbol: "CuO",     name: "Оксид меди(II)",    colorHex: "#1F2937", group: .compounds),
+        Reagent(symbol: "ZnO",     name: "Оксид цинка",       colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "CO2",     name: "Оксид углерода(IV)",colorHex: "#94A3B8", group: .compounds),
+        Reagent(symbol: "SO2",     name: "Оксид серы(IV)",    colorHex: "#CBD5E1", group: .compounds),
+        Reagent(symbol: "SO3",     name: "Оксид серы(VI)",    colorHex: "#CBD5E1", group: .compounds),
+        Reagent(symbol: "P2O5",    name: "Оксид фосфора(V)",  colorHex: "#FB923C", group: .compounds),
+        Reagent(symbol: "SiO2",    name: "Оксид кремния",     colorHex: "#A8A29E", group: .compounds),
+        Reagent(symbol: "MnO2",    name: "Оксид марганца(IV)",colorHex: "#1F2937", group: .compounds),
+
+        // ============ ОСНОВАНИЯ ============
         Reagent(symbol: "NaOH",    name: "Гидроксид натрия",  colorHex: "#A78BFA", group: .compounds),
         Reagent(symbol: "KOH",     name: "Гидроксид калия",   colorHex: "#C084FC", group: .compounds),
-        Reagent(symbol: "CuSO4",   name: "Сульфат меди(II)",  colorHex: "#06B6D4", group: .compounds),
-        Reagent(symbol: "CuCl2",   name: "Хлорид меди(II)",   colorHex: "#0891B2", group: .compounds),
-        Reagent(symbol: "AgNO3",   name: "Нитрат серебра",    colorHex: "#E5E7EB", group: .compounds),
-        Reagent(symbol: "NaCl",    name: "Хлорид натрия",     colorHex: "#E5E7EB", group: .compounds),
-        Reagent(symbol: "Na2CO3",  name: "Карбонат натрия",   colorHex: "#E5E7EB", group: .compounds),
-        Reagent(symbol: "Na2SO4",  name: "Сульфат натрия",    colorHex: "#E5E7EB", group: .compounds),
-        Reagent(symbol: "BaCl2",   name: "Хлорид бария",      colorHex: "#E5E7EB", group: .compounds),
-        Reagent(symbol: "CaCO3",   name: "Карбонат кальция",  colorHex: "#F1F5F9", group: .compounds),
-        Reagent(symbol: "FeCl3",   name: "Хлорид железа(III)",colorHex: "#B45309", group: .compounds),
-        Reagent(symbol: "CuO",     name: "Оксид меди(II)",    colorHex: "#1F2937", group: .compounds),
-        Reagent(symbol: "Fe2O3",   name: "Оксид железа(III)", colorHex: "#92400E", group: .compounds),
-        Reagent(symbol: "CaO",     name: "Оксид кальция",     colorHex: "#FCD34D", group: .compounds),
-        Reagent(symbol: "CO2",     name: "Оксид углерода(IV)",colorHex: "#94A3B8", group: .compounds),
+        Reagent(symbol: "Ca(OH)2", name: "Гидроксид кальция", colorHex: "#E9D5FF", group: .compounds),
+        Reagent(symbol: "Ba(OH)2", name: "Гидроксид бария",   colorHex: "#DDD6FE", group: .compounds),
+        Reagent(symbol: "NH4OH",   name: "Гидроксид аммония", colorHex: "#C7D2FE", group: .compounds),
 
-        // Органика
+        // ============ КИСЛОТЫ ============
+        Reagent(symbol: "HCl",     name: "Соляная кислота",   colorHex: "#FCD34D", group: .compounds),
+        Reagent(symbol: "H2SO4",   name: "Серная кислота",    colorHex: "#FBBF24", group: .compounds),
+        Reagent(symbol: "HNO3",    name: "Азотная кислота",   colorHex: "#F59E0B", group: .compounds),
+        Reagent(symbol: "H3PO4",   name: "Фосфорная кислота", colorHex: "#F97316", group: .compounds),
+        Reagent(symbol: "HF",      name: "Фтороводород",      colorHex: "#22C55E", group: .compounds),
+        Reagent(symbol: "H2S",     name: "Сероводород",       colorHex: "#FACC15", group: .compounds),
+
+        // ============ СОЛИ — ХЛОРИДЫ ============
+        Reagent(symbol: "NaCl",    name: "Хлорид натрия",     colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "KCl",     name: "Хлорид калия",      colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "CaCl2",   name: "Хлорид кальция",    colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "BaCl2",   name: "Хлорид бария",      colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "CuCl2",   name: "Хлорид меди(II)",   colorHex: "#0891B2", group: .compounds),
+        Reagent(symbol: "FeCl3",   name: "Хлорид железа(III)",colorHex: "#B45309", group: .compounds),
+        Reagent(symbol: "AgCl",    name: "Хлорид серебра",    colorHex: "#F8FAFC", group: .compounds),
+
+        // ============ СОЛИ — ФТОРИДЫ ============
+        Reagent(symbol: "NaF",     name: "Фторид натрия",     colorHex: "#BBF7D0", group: .compounds),
+        Reagent(symbol: "KF",      name: "Фторид калия",      colorHex: "#BBF7D0", group: .compounds),
+        Reagent(symbol: "CaF2",    name: "Фторид кальция",    colorHex: "#BBF7D0", group: .compounds),
+
+        // ============ СОЛИ — СУЛЬФИДЫ ============
+        Reagent(symbol: "Na2S",    name: "Сульфид натрия",    colorHex: "#FDE68A", group: .compounds),
+        Reagent(symbol: "FeS",     name: "Сульфид железа(II)",colorHex: "#3F3F46", group: .compounds),
+        Reagent(symbol: "CuS",     name: "Сульфид меди(II)",  colorHex: "#0F172A", group: .compounds),
+        Reagent(symbol: "ZnS",     name: "Сульфид цинка",     colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "PbS",     name: "Сульфид свинца",    colorHex: "#1E293B", group: .compounds),
+        Reagent(symbol: "Ag2S",    name: "Сульфид серебра",   colorHex: "#0C0A09", group: .compounds),
+
+        // ============ СОЛИ — СУЛЬФАТЫ ============
+        Reagent(symbol: "Na2SO4",  name: "Сульфат натрия",    colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "CuSO4",   name: "Сульфат меди(II)",  colorHex: "#06B6D4", group: .compounds),
+        Reagent(symbol: "ZnSO4",   name: "Сульфат цинка",     colorHex: "#E0E7FF", group: .compounds),
+        Reagent(symbol: "FeSO4",   name: "Сульфат железа(II)",colorHex: "#A3E635", group: .compounds),
+        Reagent(symbol: "BaSO4",   name: "Сульфат бария",     colorHex: "#FFFFFF", group: .compounds),
+
+        // ============ СОЛИ — НИТРАТЫ ============
+        Reagent(symbol: "AgNO3",   name: "Нитрат серебра",    colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "Cu(NO3)2",name: "Нитрат меди(II)",   colorHex: "#0E7490", group: .compounds),
+        Reagent(symbol: "KNO3",    name: "Нитрат калия",      colorHex: "#E5E7EB", group: .compounds),
+
+        // ============ СОЛИ — КАРБОНАТЫ ============
+        Reagent(symbol: "Na2CO3",  name: "Карбонат натрия",   colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "K2CO3",   name: "Карбонат калия",    colorHex: "#E5E7EB", group: .compounds),
+        Reagent(symbol: "CaCO3",   name: "Карбонат кальция",  colorHex: "#F1F5F9", group: .compounds),
+
+        // ============ ОРГАНИКА ============
         Reagent(symbol: "CH4",     name: "Метан",             colorHex: "#84CC16", group: .organic),
+        Reagent(symbol: "C2H6",    name: "Этан",              colorHex: "#7DD3FC", group: .organic),
         Reagent(symbol: "C2H4",    name: "Этилен",            colorHex: "#65A30D", group: .organic),
         Reagent(symbol: "C2H2",    name: "Ацетилен",          colorHex: "#4D7C0F", group: .organic),
         Reagent(symbol: "C2H5OH",  name: "Этанол",            colorHex: "#A3E635", group: .organic),
+        Reagent(symbol: "CH3OH",   name: "Метанол",           colorHex: "#BEF264", group: .organic),
         Reagent(symbol: "CH3COOH", name: "Уксусная кислота",  colorHex: "#BEF264", group: .organic),
+        Reagent(symbol: "CH3CHO",  name: "Ацетальдегид",      colorHex: "#FDE68A", group: .organic),
+        Reagent(symbol: "C6H6",    name: "Бензол",            colorHex: "#FB923C", group: .organic),
     ]
 
     static func findReagent(by symbol: String) -> Reagent? {
         return reagents.first { $0.symbol == symbol }
     }
 
-    // MARK: - БАЗА РЕАКЦИЙ
+    // MARK: - ПОЛНАЯ БАЗА РЕАКЦИЙ
     static let reactions: [ChemicalReaction] = [
 
-        // ================== 1. ВОДА + КИСЛОТА (ОПАСНО!) ==================
-        ChemicalReaction(
-            reagents: ["H2O", "H2SO4"], products: ["H2SO4"], productNames: ["Серная кислота (разбавленная)"],
-            equation: "H₂SO₄ + H₂O → H₂SO₄ (разб.) + Q",
-            effect: .explosion, effectColorHex: "#F97316",
-            warning: "⚠️ НЕЛЬЗЯ добавлять воду в серную кислоту! Из-за сильного разогрева вода мгновенно вскипает, и кислота разбрызгивается. Правильно: кислоту тонкой струйкой льют В воду при перемешивании."
-        ),
-        ChemicalReaction(
-            reagents: ["H2O", "HCl"], products: ["HCl"], productNames: ["Соляная кислота (разбавленная)"],
-            equation: "HCl + H₂O → HCl (разб.) + Q",
-            effect: .glow, effectColorHex: "#FCD34D",
-            warning: "⚠️ Нельзя лить воду в концентрированную кислоту — бурное выделение тепла может привести к разбрызгиванию. Кислоту добавляют в воду, а не наоборот."
-        ),
-        ChemicalReaction(
-            reagents: ["H2O", "NaOH"], products: ["NaOH"], productNames: ["Гидроксид натрия (раствор)"],
-            equation: "NaOH + H₂O → NaOH (р-р) + Q",
-            effect: .glow, effectColorHex: "#A78BFA",
-            warning: "⚠️ При растворении щёлочи в воде выделяется много тепла. Нельзя добавлять щёлочь в горячую воду — раствор может закипеть и выплеснуться."
-        ),
-        ChemicalReaction(
-            reagents: ["H2O", "KOH"], products: ["KOH"], productNames: ["Гидроксид калия (раствор)"],
-            equation: "KOH + H₂O → KOH (р-р) + Q",
-            effect: .glow, effectColorHex: "#C084FC",
-            warning: "⚠️ Растворение щёлочи в воде сильно экзотермично. Работай в защитных очках, добавляй щёлочь в воду небольшими порциями."
-        ),
-
-        // ================== 2. АКТИВНЫЕ МЕТАЛЛЫ + ВОДА (ОПАСНО!) ==================
-        ChemicalReaction(
-            reagents: ["Na", "H2O"], products: ["NaOH"], productNames: ["Гидроксид натрия"],
-            equation: "2Na + 2H₂O → 2NaOH + H₂↑",
-            effect: .explosion, effectColorHex: "#F97316",
-            warning: "⚠️ Натрий бурно реагирует с водой с выделением водорода. Водород может воспламениться! Опыт проводят только с маленьким кусочком металла под тягой."
-        ),
-        ChemicalReaction(
-            reagents: ["K", "H2O"], products: ["KOH"], productNames: ["Гидроксид калия"],
-            equation: "2K + 2H₂O → 2KOH + H₂↑",
-            effect: .explosion, effectColorHex: "#DC2626",
-            warning: "🚨 ВНИМАНИЕ! Калий реагирует с водой со ВЗРЫВОМ! Реакция сопровождается воспламенением выделяющегося водорода. Опыт крайне опасен."
-        ),
-        ChemicalReaction(
-            reagents: ["Ca", "H2O"], products: ["Ca(OH)2"], productNames: ["Гидроксид кальция"],
-            equation: "Ca + 2H₂O → Ca(OH)₂ + H₂↑",
-            effect: .gas, effectColorHex: "#E0F2FE",
-            warning: "⚠️ Кальций реагирует с водой с выделением водорода и тепла. Нельзя брать крупные куски — возможен разогрев и воспламенение газа."
-        ),
-        ChemicalReaction(
-            reagents: ["Ba", "H2O"], products: ["Ba(OH)2"], productNames: ["Гидроксид бария"],
-            equation: "Ba + 2H₂O → Ba(OH)₂ + H₂↑",
-            effect: .gas, effectColorHex: "#E0F2FE",
-            warning: "⚠️ Барий — активный металл. Соединения бария ядовиты! Работай под тягой в перчатках."
-        ),
-
-        // ================== 3. МЕТАЛЛ + КИСЛОТА ==================
-        ChemicalReaction(
-            reagents: ["Zn", "HCl"], products: ["ZnCl2"], productNames: ["Хлорид цинка"],
-            equation: "Zn + 2HCl → ZnCl₂ + H₂↑",
-            effect: .gas, effectColorHex: "#E0F2FE"
-        ),
-        ChemicalReaction(
-            reagents: ["Fe", "HCl"], products: ["FeCl2"], productNames: ["Хлорид железа(II)"],
-            equation: "Fe + 2HCl → FeCl₂ + H₂↑",
-            effect: .gas, effectColorHex: "#DCFCE7"
-        ),
-        ChemicalReaction(
-            reagents: ["Mg", "HCl"], products: ["MgCl2"], productNames: ["Хлорид магния"],
-            equation: "Mg + 2HCl → MgCl₂ + H₂↑",
-            effect: .gas, effectColorHex: "#E0F2FE"
-        ),
-        ChemicalReaction(
-            reagents: ["Al", "HCl"], products: ["AlCl3"], productNames: ["Хлорид алюминия"],
-            equation: "2Al + 6HCl → 2AlCl₃ + 3H₂↑",
-            effect: .gas, effectColorHex: "#E0F2FE"
-        ),
-        ChemicalReaction(
-            reagents: ["Zn", "H2SO4"], products: ["ZnSO4"], productNames: ["Сульфат цинка"],
-            equation: "Zn + H₂SO₄ → ZnSO₄ + H₂↑",
-            effect: .gas, effectColorHex: "#E0F2FE"
-        ),
-        ChemicalReaction(
-            reagents: ["Fe", "H2SO4"], products: ["FeSO4"], productNames: ["Сульфат железа(II)"],
-            equation: "Fe + H₂SO₄ → FeSO₄ + H₂↑",
-            effect: .gas, effectColorHex: "#E0F2FE"
-        ),
-        ChemicalReaction(
-            reagents: ["Mg", "H2SO4"], products: ["MgSO4"], productNames: ["Сульфат магния"],
-            equation: "Mg + H₂SO₄ → MgSO₄ + H₂↑",
-            effect: .gas, effectColorHex: "#E0F2FE"
-        ),
-
-        // ================== 4. МЕТАЛЛ + КИСЛОРОД ==================
-        ChemicalReaction(reagents: ["H", "O"], products: ["H2O"], productNames: ["Вода"],
-            equation: "2H₂ + O₂ → 2H₂O", effect: .explosion, effectColorHex: "#FCD34D",
-            warning: "⚠️ Гремучий газ! Смесь водорода и кислорода взрывается от искры. Опыт очень опасен."),
-        ChemicalReaction(reagents: ["Na", "O"], products: ["Na2O"], productNames: ["Оксид натрия"],
+        // ==================== 1. МЕТАЛЛ + КИСЛОРОД ====================
+        ChemicalReaction(reagents: ["Li","O"], products: ["Li2O"], productNames: ["Оксид лития"],
+            equation: "4Li + O₂ → 2Li₂O", effect: .flash, effectColorHex: "#FEF08A"),
+        ChemicalReaction(reagents: ["Na","O"], products: ["Na2O"], productNames: ["Оксид натрия"],
             equation: "4Na + O₂ → 2Na₂O", effect: .flash, effectColorHex: "#FEF08A"),
-        ChemicalReaction(reagents: ["K", "O"], products: ["K2O"], productNames: ["Оксид калия"],
+        ChemicalReaction(reagents: ["K","O"], products: ["K2O"], productNames: ["Оксид калия"],
             equation: "4K + O₂ → 2K₂O", effect: .flash, effectColorHex: "#FEF08A"),
-        ChemicalReaction(reagents: ["Mg", "O"], products: ["MgO"], productNames: ["Оксид магния"],
+        ChemicalReaction(reagents: ["Mg","O"], products: ["MgO"], productNames: ["Оксид магния"],
             equation: "2Mg + O₂ → 2MgO", effect: .flash, effectColorHex: "#FFFFFF"),
-        ChemicalReaction(reagents: ["Ca", "O"], products: ["CaO"], productNames: ["Оксид кальция"],
+        ChemicalReaction(reagents: ["Ca","O"], products: ["CaO"], productNames: ["Оксид кальция"],
             equation: "2Ca + O₂ → 2CaO", effect: .glow, effectColorHex: "#FCD34D"),
-        ChemicalReaction(reagents: ["Al", "O"], products: ["Al2O3"], productNames: ["Оксид алюминия"],
+        ChemicalReaction(reagents: ["Ba","O"], products: ["BaO"], productNames: ["Оксид бария"],
+            equation: "2Ba + O₂ → 2BaO", effect: .glow, effectColorHex: "#FCD34D"),
+        ChemicalReaction(reagents: ["Al","O"], products: ["Al2O3"], productNames: ["Оксид алюминия"],
             equation: "4Al + 3O₂ → 2Al₂O₃", effect: .flash, effectColorHex: "#FFFFFF"),
-        ChemicalReaction(reagents: ["Fe", "O"], products: ["Fe2O3"], productNames: ["Оксид железа(III)"],
-            equation: "4Fe + 3O₂ → 2Fe₂O₃", effect: .explosion, effectColorHex: "#F97316"),
-        ChemicalReaction(reagents: ["Cu", "O"], products: ["CuO"], productNames: ["Оксид меди(II)"],
+        ChemicalReaction(reagents: ["Fe","O"], products: ["Fe2O3"], productNames: ["Оксид железа(III)"],
+            equation: "4Fe + 3O₂ → 2Fe₂O₃", effect: .explosion, effectColorHex: "#F97316",
+            warning: "⚠️ Горение железа в кислороде — эффектная реакция, но при большой массе металла выделяется очень много тепла. Проводят только с железной проволокой небольшого диаметра."),
+        ChemicalReaction(reagents: ["Cu","O"], products: ["CuO"], productNames: ["Оксид меди(II)"],
             equation: "2Cu + O₂ → 2CuO", effect: .colorChange, effectColorHex: "#1F2937"),
-        ChemicalReaction(reagents: ["Zn", "O"], products: ["ZnO"], productNames: ["Оксид цинка"],
+        ChemicalReaction(reagents: ["Zn","O"], products: ["ZnO"], productNames: ["Оксид цинка"],
             equation: "2Zn + O₂ → 2ZnO", effect: .glow, effectColorHex: "#E5E7EB"),
-        ChemicalReaction(reagents: ["S", "O"], products: ["SO2"], productNames: ["Оксид серы(IV)"],
-            equation: "S + O₂ → SO₂", effect: .gas, effectColorHex: "#CBD5E1"),
-        ChemicalReaction(reagents: ["C", "O"], products: ["CO2"], productNames: ["Оксид углерода(IV)"],
+        ChemicalReaction(reagents: ["Mn","O"], products: ["MnO2"], productNames: ["Оксид марганца(IV)"],
+            equation: "Mn + O₂ → MnO₂", effect: .glow, effectColorHex: "#1F2937"),
+        ChemicalReaction(reagents: ["Pb","O"], products: ["PbO"], productNames: ["Оксид свинца(II)"],
+            equation: "2Pb + O₂ → 2PbO", effect: .glow, effectColorHex: "#FCD34D"),
+
+        // ==================== 2. НЕМЕТАЛЛ + КИСЛОРОД ====================
+        ChemicalReaction(reagents: ["H","O"], products: ["H2O"], productNames: ["Вода"],
+            equation: "2H₂ + O₂ → 2H₂O", effect: .explosion, effectColorHex: "#FCD34D",
+            warning: "🚨 Гремучий газ! Смесь водорода и кислорода взрывается от искры. Не проводить вблизи открытого огня."),
+        ChemicalReaction(reagents: ["C","O"], products: ["CO2"], productNames: ["Оксид углерода(IV)"],
             equation: "C + O₂ → CO₂", effect: .glow, effectColorHex: "#F97316"),
-        ChemicalReaction(reagents: ["P", "O"], products: ["P2O5"], productNames: ["Оксид фосфора(V)"],
-            equation: "4P + 5O₂ → 2P₂O₅", effect: .flash, effectColorHex: "#FEF08A"),
-        ChemicalReaction(reagents: ["N", "O"], products: ["NO"], productNames: ["Оксид азота(II)"],
-            equation: "N₂ + O₂ → 2NO", effect: .glow, effectColorHex: "#3B82F6"),
+        ChemicalReaction(reagents: ["S","O"], products: ["SO2"], productNames: ["Оксид серы(IV)"],
+            equation: "S + O₂ → SO₂", effect: .gas, effectColorHex: "#CBD5E1",
+            warning: "⚠️ SO₂ — токсичный газ с резким запахом. Проводят только под тягой."),
+        ChemicalReaction(reagents: ["P","O"], products: ["P2O5"], productNames: ["Оксид фосфора(V)"],
+            equation: "4P + 5O₂ → 2P₂O₅", effect: .flash, effectColorHex: "#FEF08A",
+            warning: "⚠️ Белый фосфор воспламеняется на воздухе. Работать только с красным фосфором."),
+        ChemicalReaction(reagents: ["N","O"], products: ["NO"], productNames: ["Оксид азота(II)"],
+            equation: "N₂ + O₂ → 2NO (t°≈2000°C)", effect: .glow, effectColorHex: "#3B82F6"),
+        ChemicalReaction(reagents: ["Si","O"], products: ["SiO2"], productNames: ["Оксид кремния"],
+            equation: "Si + O₂ → SiO₂", effect: .glow, effectColorHex: "#A8A29E"),
 
-        // ================== 5. С ХЛОРОМ ==================
-        ChemicalReaction(reagents: ["Na", "Cl"], products: ["NaCl"], productNames: ["Хлорид натрия"],
+        // ==================== 3. МЕТАЛЛ + ГАЛОГЕН ====================
+        ChemicalReaction(reagents: ["Na","Cl"], products: ["NaCl"], productNames: ["Хлорид натрия"],
             equation: "2Na + Cl₂ → 2NaCl", effect: .flash, effectColorHex: "#FEF08A"),
-        ChemicalReaction(reagents: ["H", "Cl"], products: ["HCl"], productNames: ["Соляная кислота"],
-            equation: "H₂ + Cl₂ → 2HCl", effect: .explosion, effectColorHex: "#FEF08A"),
-        ChemicalReaction(reagents: ["Fe", "Cl"], products: ["FeCl3"], productNames: ["Хлорид железа(III)"],
-            equation: "2Fe + 3Cl₂ → 2FeCl₃", effect: .flash, effectColorHex: "#F97316"),
-        ChemicalReaction(reagents: ["Cu", "Cl"], products: ["CuCl2"], productNames: ["Хлорид меди(II)"],
+        ChemicalReaction(reagents: ["K","Cl"], products: ["KCl"], productNames: ["Хлорид калия"],
+            equation: "2K + Cl₂ → 2KCl", effect: .flash, effectColorHex: "#FEF08A"),
+        ChemicalReaction(reagents: ["Ca","Cl"], products: ["CaCl2"], productNames: ["Хлорид кальция"],
+            equation: "Ca + Cl₂ → CaCl₂", effect: .flash, effectColorHex: "#FEF08A"),
+        ChemicalReaction(reagents: ["Cu","Cl"], products: ["CuCl2"], productNames: ["Хлорид меди(II)"],
             equation: "Cu + Cl₂ → CuCl₂", effect: .glow, effectColorHex: "#0891B2"),
+        ChemicalReaction(reagents: ["Fe","Cl"], products: ["FeCl3"], productNames: ["Хлорид железа(III)"],
+            equation: "2Fe + 3Cl₂ → 2FeCl₃", effect: .flash, effectColorHex: "#F97316"),
+        ChemicalReaction(reagents: ["H","Cl"], products: ["HCl"], productNames: ["Хлороводород"],
+            equation: "H₂ + Cl₂ → 2HCl (свет)", effect: .explosion, effectColorHex: "#FEF08A",
+            warning: "⚠️ Реакция идёт на свету со взрывом. HCl — едкий газ, работать под тягой."),
 
-        // ================== 6. С СЕРОЙ ==================
-        ChemicalReaction(reagents: ["Fe", "S"], products: ["FeS"], productNames: ["Сульфид железа(II)"],
+        // ==================== 4. ФТОР И ФТОРИДЫ ====================
+        ChemicalReaction(reagents: ["H","F"], products: ["HF"], productNames: ["Фтороводород"],
+            equation: "H₂ + F₂ → 2HF", effect: .explosion, effectColorHex: "#22C55E",
+            warning: "🚨 Фтор — самый активный неметалл. Реакция с водородом идёт со взрывом даже на холоде. Крайне опасно!"),
+        ChemicalReaction(reagents: ["Na","F"], products: ["NaF"], productNames: ["Фторид натрия"],
+            equation: "2Na + F₂ → 2NaF", effect: .explosion, effectColorHex: "#22C55E",
+            warning: "🚨 Фтор реагирует с металлами со взрывом. Работать только в специальной аппаратуре."),
+        ChemicalReaction(reagents: ["K","F"], products: ["KF"], productNames: ["Фторид калия"],
+            equation: "2K + F₂ → 2KF", effect: .explosion, effectColorHex: "#22C55E"),
+        ChemicalReaction(reagents: ["Ca","F"], products: ["CaF2"], productNames: ["Фторид кальция"],
+            equation: "Ca + F₂ → CaF₂", effect: .flash, effectColorHex: "#22C55E"),
+        ChemicalReaction(reagents: ["HF","NaOH"], products: ["NaF"], productNames: ["Фторид натрия"],
+            equation: "HF + NaOH → NaF + H₂O", effect: .glow, effectColorHex: "#BBF7D0",
+            warning: "⚠️ Плавиковая кислота (HF) разъедает стекло и очень токсична. Работать только в пластиковой посуде!"),
+
+        // ==================== 5. МЕТАЛЛ + СЕРА (СУЛЬФИДЫ) ====================
+        ChemicalReaction(reagents: ["Na","S"], products: ["Na2S"], productNames: ["Сульфид натрия"],
+            equation: "2Na + S → Na₂S", effect: .explosion, effectColorHex: "#FDE68A",
+            warning: "⚠️ Реакция натрия с серой идёт со вспышкой. Проводят под тягой."),
+        ChemicalReaction(reagents: ["Fe","S"], products: ["FeS"], productNames: ["Сульфид железа(II)"],
             equation: "Fe + S → FeS", effect: .glow, effectColorHex: "#7C2D12"),
-        ChemicalReaction(reagents: ["Cu", "S"], products: ["CuS"], productNames: ["Сульфид меди(II)"],
+        ChemicalReaction(reagents: ["Cu","S"], products: ["CuS"], productNames: ["Сульфид меди(II)"],
             equation: "Cu + S → CuS", effect: .glow, effectColorHex: "#0F172A"),
-        ChemicalReaction(reagents: ["Zn", "S"], products: ["ZnS"], productNames: ["Сульфид цинка"],
+        ChemicalReaction(reagents: ["Zn","S"], products: ["ZnS"], productNames: ["Сульфид цинка"],
             equation: "Zn + S → ZnS", effect: .glow, effectColorHex: "#E5E7EB"),
+        ChemicalReaction(reagents: ["Pb","S"], products: ["PbS"], productNames: ["Сульфид свинца"],
+            equation: "Pb + S → PbS", effect: .glow, effectColorHex: "#1E293B"),
+        ChemicalReaction(reagents: ["Ag","S"], products: ["Ag2S"], productNames: ["Сульфид серебра"],
+            equation: "2Ag + S → Ag₂S", effect: .colorChange, effectColorHex: "#0C0A09"),
 
-        // ================== 7. КИСЛОТА + ОСНОВАНИЕ ==================
-        ChemicalReaction(reagents: ["NaOH", "HCl"], products: ["NaCl"], productNames: ["Хлорид натрия"],
-            equation: "NaOH + HCl → NaCl + H₂O", effect: .glow, effectColorHex: "#FEF3C7"),
-        ChemicalReaction(reagents: ["KOH", "HCl"], products: ["KCl"], productNames: ["Хлорид калия"],
-            equation: "KOH + HCl → KCl + H₂O", effect: .glow, effectColorHex: "#FEF3C7"),
-        ChemicalReaction(reagents: ["NaOH", "H2SO4"], products: ["Na2SO4"], productNames: ["Сульфат натрия"],
-            equation: "2NaOH + H₂SO₄ → Na₂SO₄ + 2H₂O", effect: .glow, effectColorHex: "#FEF3C7"),
+        // ==================== 6. МЕТАЛЛ + ВОДА ====================
+        ChemicalReaction(reagents: ["Li","H2O"], products: ["LiOH"], productNames: ["Гидроксид лития"],
+            equation: "2Li + 2H₂O → 2LiOH + H₂↑", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["Na","H2O"], products: ["NaOH"], productNames: ["Гидроксид натрия"],
+            equation: "2Na + 2H₂O → 2NaOH + H₂↑", effect: .explosion, effectColorHex: "#F97316",
+            warning: "⚠️ Натрий бурно реагирует с водой. Водород может воспламениться! Берут только маленький кусочек под тягой."),
+        ChemicalReaction(reagents: ["K","H2O"], products: ["KOH"], productNames: ["Гидроксид калия"],
+            equation: "2K + 2H₂O → 2KOH + H₂↑", effect: .explosion, effectColorHex: "#DC2626",
+            warning: "🚨 Калий реагирует с водой со ВЗРЫВОМ! Водород воспламеняется. Опыт крайне опасен."),
+        ChemicalReaction(reagents: ["Ca","H2O"], products: ["Ca(OH)2"], productNames: ["Гидроксид кальция"],
+            equation: "Ca + 2H₂O → Ca(OH)₂ + H₂↑", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["Ba","H2O"], products: ["Ba(OH)2"], productNames: ["Гидроксид бария"],
+            equation: "Ba + 2H₂O → Ba(OH)₂ + H₂↑", effect: .gas, effectColorHex: "#E0F2FE",
+            warning: "⚠️ Барий и его соединения ядовиты! Работать в перчатках под тягой."),
 
-        // ================== 8. КАРБОНАТЫ + КИСЛОТЫ ==================
-        ChemicalReaction(reagents: ["CaCO3", "HCl"], products: ["CaCl2"], productNames: ["Хлорид кальция"],
-            equation: "CaCO₃ + 2HCl → CaCl₂ + H₂O + CO₂↑", effect: .gas, effectColorHex: "#F1F5F9"),
-        ChemicalReaction(reagents: ["Na2CO3", "HCl"], products: ["NaCl"], productNames: ["Хлорид натрия"],
-            equation: "Na₂CO₃ + 2HCl → 2NaCl + H₂O + CO₂↑", effect: .gas, effectColorHex: "#F1F5F9"),
+        // ==================== 7. МЕТАЛЛ + КИСЛОТА ====================
+        ChemicalReaction(reagents: ["Li","HCl"], products: ["LiCl"], productNames: ["Хлорид лития"],
+            equation: "2Li + 2HCl → 2LiCl + H₂↑", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["Na","HCl"], products: ["NaCl"], productNames: ["Хлорид натрия"],
+            equation: "2Na + 2HCl → 2NaCl + H₂↑", effect: .explosion, effectColorHex: "#DC2626",
+            warning: "🚨 Натрий с кислотой реагирует со взрывом! В лаборатории так не делают."),
+        ChemicalReaction(reagents: ["K","HCl"], products: ["KCl"], productNames: ["Хлорид калия"],
+            equation: "2K + 2HCl → 2KCl + H₂↑", effect: .explosion, effectColorHex: "#DC2626",
+            warning: "🚨 Калий с кислотой — взрывоопасно!"),
+        ChemicalReaction(reagents: ["Mg","HCl"], products: ["MgCl2"], productNames: ["Хлорид магния"],
+            equation: "Mg + 2HCl → MgCl₂ + H₂↑", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["Zn","HCl"], products: ["ZnCl2"], productNames: ["Хлорид цинка"],
+            equation: "Zn + 2HCl → ZnCl₂ + H₂↑", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["Fe","HCl"], products: ["FeCl2"], productNames: ["Хлорид железа(II)"],
+            equation: "Fe + 2HCl → FeCl₂ + H₂↑", effect: .gas, effectColorHex: "#DCFCE7"),
+        ChemicalReaction(reagents: ["Al","HCl"], products: ["AlCl3"], productNames: ["Хлорид алюминия"],
+            equation: "2Al + 6HCl → 2AlCl₃ + 3H₂↑", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["Mg","H2SO4"], products: ["MgSO4"], productNames: ["Сульфат магния"],
+            equation: "Mg + H₂SO₄ → MgSO₄ + H₂↑", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["Zn","H2SO4"], products: ["ZnSO4"], productNames: ["Сульфат цинка"],
+            equation: "Zn + H₂SO₄ → ZnSO₄ + H₂↑", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["Fe","H2SO4"], products: ["FeSO4"], productNames: ["Сульфат железа(II)"],
+            equation: "Fe + H₂SO₄ → FeSO₄ + H₂↑", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["Zn","HNO3"], products: ["ZnNO3"], productNames: ["Нитрат цинка"],
+            equation: "3Zn + 8HNO₃(разб.) → 3Zn(NO₃)₂ + 2NO↑ + 4H₂O", effect: .gas, effectColorHex: "#F59E0B",
+            warning: "⚠️ Азотная кислота выделяет ядовитые оксиды азота! Работать только под тягой."),
 
-        // ================== 9. ОСАДКИ (ионный обмен) ==================
-        ChemicalReaction(reagents: ["CuSO4", "NaOH"], products: ["Cu(OH)2"], productNames: ["Гидроксид меди(II)"],
-            equation: "CuSO₄ + 2NaOH → Cu(OH)₂↓ + Na₂SO₄", effect: .precipitateBlue, effectColorHex: "#3B82F6"),
-        ChemicalReaction(reagents: ["AgNO3", "NaCl"], products: ["AgCl"], productNames: ["Хлорид серебра"],
-            equation: "AgNO₃ + NaCl → AgCl↓ + NaNO₃", effect: .precipitateWhite, effectColorHex: "#F8FAFC"),
-        ChemicalReaction(reagents: ["BaCl2", "Na2SO4"], products: ["BaSO4"], productNames: ["Сульфат бария"],
-            equation: "BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl", effect: .precipitateWhite, effectColorHex: "#FFFFFF"),
-        ChemicalReaction(reagents: ["FeCl3", "NaOH"], products: ["Fe(OH)3"], productNames: ["Гидроксид железа(III)"],
-            equation: "FeCl₃ + 3NaOH → Fe(OH)₃↓ + 3NaCl", effect: .precipitateBrown, effectColorHex: "#92400E"),
-        ChemicalReaction(reagents: ["AgNO3", "HCl"], products: ["AgCl"], productNames: ["Хлорид серебра"],
-            equation: "AgNO₃ + HCl → AgCl↓ + HNO₃", effect: .precipitateWhite, effectColorHex: "#FFFFFF"),
-        ChemicalReaction(reagents: ["CuCl2", "NaOH"], products: ["Cu(OH)2"], productNames: ["Гидроксид меди(II)"],
-            equation: "CuCl₂ + 2NaOH → Cu(OH)₂↓ + 2NaCl", effect: .precipitateBlue, effectColorHex: "#3B82F6"),
-
-        // ================== 10. ЗАМЕЩЕНИЕ ==================
-        ChemicalReaction(reagents: ["Fe", "CuSO4"], products: ["Cu"], productNames: ["Медь"],
+        // ==================== 8. МЕТАЛЛ + СОЛЬ (ВЫТЕСНЕНИЕ) ====================
+        ChemicalReaction(reagents: ["Fe","CuSO4"], products: ["Cu"], productNames: ["Медь"],
             equation: "Fe + CuSO₄ → FeSO₄ + Cu", effect: .colorChange, effectColorHex: "#EA580C"),
-        ChemicalReaction(reagents: ["Zn", "CuSO4"], products: ["Cu"], productNames: ["Медь"],
+        ChemicalReaction(reagents: ["Zn","CuSO4"], products: ["Cu"], productNames: ["Медь"],
             equation: "Zn + CuSO₄ → ZnSO₄ + Cu", effect: .colorChange, effectColorHex: "#EA580C"),
-        ChemicalReaction(reagents: ["Cu", "AgNO3"], products: ["Ag"], productNames: ["Серебро"],
-            equation: "Cu + 2AgNO₃ → Cu(NO₃)₂ + 2Ag", effect: .colorChange, effectColorHex: "#CBD5E1"),
-        ChemicalReaction(reagents: ["Al", "CuCl2"], products: ["AlCl3"], productNames: ["Хлорид алюминия"],
+        ChemicalReaction(reagents: ["Al","CuCl2"], products: ["AlCl3"], productNames: ["Хлорид алюминия"],
             equation: "2Al + 3CuCl₂ → 2AlCl₃ + 3Cu", effect: .colorChange, effectColorHex: "#DC2626"),
+        ChemicalReaction(reagents: ["Cu","AgNO3"], products: ["Ag"], productNames: ["Серебро"],
+            equation: "Cu + 2AgNO₃ → Cu(NO₃)₂ + 2Ag", effect: .colorChange, effectColorHex: "#CBD5E1"),
+        ChemicalReaction(reagents: ["Fe","AgNO3"], products: ["Ag"], productNames: ["Серебро"],
+            equation: "Fe + 2AgNO₃ → Fe(NO₃)₂ + 2Ag", effect: .colorChange, effectColorHex: "#CBD5E1"),
+        ChemicalReaction(reagents: ["Zn","PbS"], products: ["ZnS"], productNames: ["Сульфид цинка"],
+            equation: "Zn + PbS → ZnS + Pb", effect: .colorChange, effectColorHex: "#64748B"),
 
-        // ================== 11. ВОССТАНОВЛЕНИЕ ОКСИДОВ ==================
-        ChemicalReaction(reagents: ["CuO", "H"], products: ["Cu"], productNames: ["Медь"],
-            equation: "CuO + H₂ → Cu + H₂O", effect: .colorChange, effectColorHex: "#EA580C"),
-        ChemicalReaction(reagents: ["Fe2O3", "H"], products: ["Fe"], productNames: ["Железо"],
-            equation: "Fe₂O₃ + 3H₂ → 2Fe + 3H₂O", effect: .glow, effectColorHex: "#B45309"),
-
-        // ================== 12. ОКСИД + ВОДА ==================
-        ChemicalReaction(reagents: ["CaO", "H2O"], products: ["Ca(OH)2"], productNames: ["Гидроксид кальция"],
+        // ==================== 9. ОКСИД + ВОДА ====================
+        ChemicalReaction(reagents: ["Na2O","H2O"], products: ["NaOH"], productNames: ["Гидроксид натрия"],
+            equation: "Na₂O + H₂O → 2NaOH", effect: .glow, effectColorHex: "#FCD34D"),
+        ChemicalReaction(reagents: ["K2O","H2O"], products: ["KOH"], productNames: ["Гидроксид калия"],
+            equation: "K₂O + H₂O → 2KOH", effect: .glow, effectColorHex: "#FCD34D"),
+        ChemicalReaction(reagents: ["CaO","H2O"], products: ["Ca(OH)2"], productNames: ["Гидроксид кальция"],
             equation: "CaO + H₂O → Ca(OH)₂ + Q", effect: .glow, effectColorHex: "#FCD34D",
-            warning: "⚠️ Реакция очень экзотическая — «гашение извести». Выделяется много тепла, вода может вскипеть. Не трогай получившийся раствор руками."),
-        ChemicalReaction(reagents: ["CO2", "H2O"], products: ["H2CO3"], productNames: ["Угольная кислота"],
+            warning: "⚠️ Гашение извести — реакция с сильным выделением тепла. Вода может вскипеть и разбрызгаться."),
+        ChemicalReaction(reagents: ["SO2","H2O"], products: ["H2SO3"], productNames: ["Сернистая кислота"],
+            equation: "SO₂ + H₂O ⇄ H₂SO₃", effect: .colorChange, effectColorHex: "#FCD34D"),
+        ChemicalReaction(reagents: ["SO3","H2O"], products: ["H2SO4"], productNames: ["Серная кислота"],
+            equation: "SO₃ + H₂O → H₂SO₄ + Q", effect: .explosion, effectColorHex: "#F97316",
+            warning: "🚨 Нельзя лить воду в SO₃! Реакция идёт с огромным выделением тепла, смесь вскипает. Растворяют только в серной кислоте."),
+        ChemicalReaction(reagents: ["CO2","H2O"], products: ["H2CO3"], productNames: ["Угольная кислота"],
             equation: "CO₂ + H₂O ⇄ H₂CO₃", effect: .glow, effectColorHex: "#94A3B8"),
+        ChemicalReaction(reagents: ["P2O5","H2O"], products: ["H3PO4"], productNames: ["Фосфорная кислота"],
+            equation: "P₂O₅ + 3H₂O → 2H₃PO₄", effect: .glow, effectColorHex: "#FBBF24"),
 
-        // ================== 13. ОРГАНИКА (10 класс) ==================
-        ChemicalReaction(reagents: ["C2H4", "Br"], products: ["C2H4Br2"], productNames: ["1,2-дибромэтан"],
-            equation: "CH₂=CH₂ + Br₂ → CH₂Br–CH₂Br", effect: .colorChange, effectColorHex: "#FEF3C7"),
-        ChemicalReaction(reagents: ["C2H2", "Br"], products: ["C2H2Br2"], productNames: ["1,2-дибромэтен"],
-            equation: "CH≡CH + Br₂ → CHBr=CHBr", effect: .colorChange, effectColorHex: "#FEF3C7"),
-        ChemicalReaction(reagents: ["C2H5OH", "CuO"], products: ["CH3CHO"], productNames: ["Ацетальдегид"],
-            equation: "C₂H₅OH + CuO → CH₃CHO + Cu + H₂O", effect: .colorChange, effectColorHex: "#DC2626"),
-        ChemicalReaction(reagents: ["C2H5OH", "Na"], products: ["C2H5ONa"], productNames: ["Этилат натрия"],
-            equation: "2C₂H₅OH + 2Na → 2C₂H₅ONa + H₂↑", effect: .gas, effectColorHex: "#E0F2FE",
-            warning: "⚠️ Натрий с этанолом реагирует так же бурно, как с водой! Может воспламениться водород. Работай с маленькими кусочками."),
-        ChemicalReaction(reagents: ["CH4", "O"], products: ["CO2"], productNames: ["Оксид углерода(IV)"],
+        // ==================== 10. КИСЛОТА + ОСНОВАНИЕ ====================
+        ChemicalReaction(reagents: ["NaOH","HCl"], products: ["NaCl"], productNames: ["Хлорид натрия"],
+            equation: "NaOH + HCl → NaCl + H₂O", effect: .glow, effectColorHex: "#FEF3C7"),
+        ChemicalReaction(reagents: ["KOH","HCl"], products: ["KCl"], productNames: ["Хлорид калия"],
+            equation: "KOH + HCl → KCl + H₂O", effect: .glow, effectColorHex: "#FEF3C7"),
+        ChemicalReaction(reagents: ["NaOH","H2SO4"], products: ["Na2SO4"], productNames: ["Сульфат натрия"],
+            equation: "2NaOH + H₂SO₄ → Na₂SO₄ + 2H₂O", effect: .glow, effectColorHex: "#FEF3C7"),
+        ChemicalReaction(reagents: ["KOH","H2SO4"], products: ["K2SO4"], productNames: ["Сульфат калия"],
+            equation: "2KOH + H₂SO₄ → K₂SO₄ + 2H₂O", effect: .glow, effectColorHex: "#FEF3C7"),
+        ChemicalReaction(reagents: ["NaOH","HNO3"], products: ["NaNO3"], productNames: ["Нитрат натрия"],
+            equation: "NaOH + HNO₃ → NaNO₃ + H₂O", effect: .glow, effectColorHex: "#FEF3C7"),
+        ChemicalReaction(reagents: ["Ca(OH)2","HCl"], products: ["CaCl2"], productNames: ["Хлорид кальция"],
+            equation: "Ca(OH)₂ + 2HCl → CaCl₂ + 2H₂O", effect: .glow, effectColorHex: "#FEF3C7"),
+        ChemicalReaction(reagents: ["Ba(OH)2","H2SO4"], products: ["BaSO4"], productNames: ["Сульфат бария"],
+            equation: "Ba(OH)₂ + H₂SO₄ → BaSO₄↓ + 2H₂O", effect: .precipitateWhite, effectColorHex: "#FFFFFF"),
+
+        // ==================== 11. КИСЛОТА + КАРБОНАТ ====================
+        ChemicalReaction(reagents: ["Na2CO3","HCl"], products: ["NaCl"], productNames: ["Хлорид натрия"],
+            equation: "Na₂CO₃ + 2HCl → 2NaCl + H₂O + CO₂↑", effect: .gas, effectColorHex: "#F1F5F9"),
+        ChemicalReaction(reagents: ["K2CO3","HCl"], products: ["KCl"], productNames: ["Хлорид калия"],
+            equation: "K₂CO₃ + 2HCl → 2KCl + H₂O + CO₂↑", effect: .gas, effectColorHex: "#F1F5F9"),
+        ChemicalReaction(reagents: ["CaCO3","HCl"], products: ["CaCl2"], productNames: ["Хлорид кальция"],
+            equation: "CaCO₃ + 2HCl → CaCl₂ + H₂O + CO₂↑", effect: .gas, effectColorHex: "#F1F5F9"),
+        ChemicalReaction(reagents: ["CaCO3","H2SO4"], products: ["CaSO4"], productNames: ["Сульфат кальция"],
+            equation: "CaCO₃ + H₂SO₄ → CaSO₄ + H₂O + CO₂↑", effect: .gas, effectColorHex: "#F1F5F9"),
+
+        // ==================== 12. КИСЛОТА + СУЛЬФИД ====================
+        ChemicalReaction(reagents: ["Na2S","HCl"], products: ["NaCl"], productNames: ["Хлорид натрия"],
+            equation: "Na₂S + 2HCl → 2NaCl + H₂S↑", effect: .gas, effectColorHex: "#FACC15",
+            warning: "⚠️ Сероводород H₂S — очень ядовитый газ с запахом тухлых яиц! Работать только под тягой."),
+        ChemicalReaction(reagents: ["FeS","HCl"], products: ["FeCl2"], productNames: ["Хлорид железа(II)"],
+            equation: "FeS + 2HCl → FeCl₂ + H₂S↑", effect: .gas, effectColorHex: "#FACC15",
+            warning: "⚠️ Выделяется токсичный H₂S! Работать под тягой."),
+        ChemicalReaction(reagents: ["ZnS","HCl"], products: ["ZnCl2"], productNames: ["Хлорид цинка"],
+            equation: "ZnS + 2HCl → ZnCl₂ + H₂S↑", effect: .gas, effectColorHex: "#FACC15",
+            warning: "⚠️ Токсичный сероводород! Только под тягой."),
+
+        // ==================== 13. ОСАДКИ (ИОННЫЙ ОБМЕН) ====================
+        ChemicalReaction(reagents: ["CuSO4","NaOH"], products: ["Cu(OH)2"], productNames: ["Гидроксид меди(II)"],
+            equation: "CuSO₄ + 2NaOH → Cu(OH)₂↓ + Na₂SO₄", effect: .precipitateBlue, effectColorHex: "#3B82F6"),
+        ChemicalReaction(reagents: ["CuCl2","NaOH"], products: ["Cu(OH)2"], productNames: ["Гидроксид меди(II)"],
+            equation: "CuCl₂ + 2NaOH → Cu(OH)₂↓ + 2NaCl", effect: .precipitateBlue, effectColorHex: "#3B82F6"),
+        ChemicalReaction(reagents: ["Cu(NO3)2","NaOH"], products: ["Cu(OH)2"], productNames: ["Гидроксид меди(II)"],
+            equation: "Cu(NO₃)₂ + 2NaOH → Cu(OH)₂↓ + 2NaNO₃", effect: .precipitateBlue, effectColorHex: "#3B82F6"),
+        ChemicalReaction(reagents: ["FeCl3","NaOH"], products: ["Fe(OH)3"], productNames: ["Гидроксид железа(III)"],
+            equation: "FeCl₃ + 3NaOH → Fe(OH)₃↓ + 3NaCl", effect: .precipitateBrown, effectColorHex: "#92400E"),
+        ChemicalReaction(reagents: ["AgNO3","NaCl"], products: ["AgCl"], productNames: ["Хлорид серебра"],
+            equation: "AgNO₃ + NaCl → AgCl↓ + NaNO₃", effect: .precipitateWhite, effectColorHex: "#F8FAFC"),
+        ChemicalReaction(reagents: ["AgNO3","KCl"], products: ["AgCl"], productNames: ["Хлорид серебра"],
+            equation: "AgNO₃ + KCl → AgCl↓ + KNO₃", effect: .precipitateWhite, effectColorHex: "#F8FAFC"),
+        ChemicalReaction(reagents: ["AgNO3","CaCl2"], products: ["AgCl"], productNames: ["Хлорид серебра"],
+            equation: "2AgNO₃ + CaCl₂ → 2AgCl↓ + Ca(NO₃)₂", effect: .precipitateWhite, effectColorHex: "#F8FAFC"),
+        ChemicalReaction(reagents: ["AgNO3","HCl"], products: ["AgCl"], productNames: ["Хлорид серебра"],
+            equation: "AgNO₃ + HCl → AgCl↓ + HNO₃", effect: .precipitateWhite, effectColorHex: "#F8FAFC"),
+        ChemicalReaction(reagents: ["AgNO3","NaF"], products: ["AgF"], productNames: ["Фторид серебра"],
+            equation: "AgNO₃ + NaF → AgF + NaNO₃", effect: .colorChange, effectColorHex: "#BBF7D0"),
+        ChemicalReaction(reagents: ["BaCl2","Na2SO4"], products: ["BaSO4"], productNames: ["Сульфат бария"],
+            equation: "BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl", effect: .precipitateWhite, effectColorHex: "#FFFFFF"),
+        ChemicalReaction(reagents: ["BaCl2","H2SO4"], products: ["BaSO4"], productNames: ["Сульфат бария"],
+            equation: "BaCl₂ + H₂SO₄ → BaSO₄↓ + 2HCl", effect: .precipitateWhite, effectColorHex: "#FFFFFF"),
+        ChemicalReaction(reagents: ["BaCl2","CuSO4"], products: ["BaSO4"], productNames: ["Сульфат бария"],
+            equation: "BaCl₂ + CuSO₄ → BaSO₄↓ + CuCl₂", effect: .precipitateWhite, effectColorHex: "#FFFFFF"),
+        ChemicalReaction(reagents: ["CaCl2","Na2CO3"], products: ["CaCO3"], productNames: ["Карбонат кальция"],
+            equation: "CaCl₂ + Na₂CO₃ → CaCO₃↓ + 2NaCl", effect: .precipitateWhite, effectColorHex: "#F1F5F9"),
+        ChemicalReaction(reagents: ["Ca(OH)2","Na2CO3"], products: ["CaCO3"], productNames: ["Карбонат кальция"],
+            equation: "Ca(OH)₂ + Na₂CO₃ → CaCO₃↓ + 2NaOH", effect: .precipitateWhite, effectColorHex: "#F1F5F9"),
+        ChemicalReaction(reagents: ["CuSO4","Na2S"], products: ["CuS"], productNames: ["Сульфид меди(II)"],
+            equation: "CuSO₄ + Na₂S → CuS↓ + Na₂SO₄", effect: .precipitateBrown, effectColorHex: "#0F172A"),
+        ChemicalReaction(reagents: ["Pb(NO3)2","Na2S"], products: ["PbS"], productNames: ["Сульфид свинца"],
+            equation: "Pb(NO₃)₂ + Na₂S → PbS↓ + 2NaNO₃", effect: .precipitateBrown, effectColorHex: "#1E293B"),
+        ChemicalReaction(reagents: ["ZnSO4","Na2S"], products: ["ZnS"], productNames: ["Сульфид цинка"],
+            equation: "ZnSO₄ + Na₂S → ZnS↓ + Na₂SO₄", effect: .precipitateWhite, effectColorHex: "#E5E7EB"),
+
+        // ==================== 14. РАЗЛОЖЕНИЕ ====================
+        ChemicalReaction(reagents: ["H2O","O"], products: ["H2O"], productNames: ["Вода"],
+            equation: "2H₂O → 2H₂↑ + O₂↑ (электролиз)", effect: .gas, effectColorHex: "#E0F2FE"),
+        ChemicalReaction(reagents: ["H2O","Mn"], products: ["MnO2"], productNames: ["Оксид марганца(IV)"],
+            equation: "2H₂O₂ → 2H₂O + O₂↑ (кат. MnO₂)", effect: .gas, effectColorHex: "#E0F2FE"),
+
+        // ==================== 15. АММИАК И ЕГО СОЛИ ====================
+        ChemicalReaction(reagents: ["N","H"], products: ["NH3"], productNames: ["Аммиак"],
+            equation: "N₂ + 3H₂ ⇄ 2NH₃ (кат., t°, p)", effect: .gas, effectColorHex: "#A5B4FC"),
+        ChemicalReaction(reagents: ["NH4OH","HCl"], products: ["NH4Cl"], productNames: ["Хлорид аммония"],
+            equation: "NH₄OH + HCl → NH₄Cl + H₂O", effect: .glow, effectColorHex: "#F1F5F9"),
+        ChemicalReaction(reagents: ["NH4OH","H2SO4"], products: ["NH4SO4"], productNames: ["Сульфат аммония"],
+            equation: "2NH₄OH + H₂SO₄ → (NH₄)₂SO₄ + 2H₂O", effect: .glow, effectColorHex: "#F1F5F9"),
+
+        // ==================== 16. ОРГАНИКА 10 КЛАСС ====================
+        ChemicalReaction(reagents: ["CH4","O"], products: ["CO2"], productNames: ["Оксид углерода(IV)"],
             equation: "CH₄ + 2O₂ → CO₂ + 2H₂O", effect: .explosion, effectColorHex: "#F97316",
-            warning: "🚨 ВНИМАНИЕ! Метан с кислородом образует взрывоопасную смесь — гремучий газ! При поджигании — сильнейший взрыв."),
-        ChemicalReaction(reagents: ["C2H4", "H"], products: ["C2H6"], productNames: ["Этан"],
-            equation: "CH₂=CH₂ + H₂ → CH₃–CH₃", effect: .glow, effectColorHex: "#84CC16"),
-        ChemicalReaction(reagents: ["CH3COOH", "NaOH"], products: ["CH3COONa"], productNames: ["Ацетат натрия"],
+            warning: "🚨 Метан с кислородом образует взрывоопасную смесь (гремучий газ)! Взрыв при поджигании."),
+        ChemicalReaction(reagents: ["C2H6","O"], products: ["CO2"], productNames: ["Оксид углерода(IV)"],
+            equation: "2C₂H₆ + 7O₂ → 4CO₂ + 6H₂O", effect: .explosion, effectColorHex: "#F97316"),
+        ChemicalReaction(reagents: ["C2H4","O"], products: ["CO2"], productNames: ["Оксид углерода(IV)"],
+            equation: "C₂H₄ + 3O₂ → 2CO₂ + 2H₂O", effect: .explosion, effectColorHex: "#F97316"),
+        ChemicalReaction(reagents: ["C2H4","Br"], products: ["C2H4Br2"], productNames: ["1,2-дибромэтан"],
+            equation: "CH₂=CH₂ + Br₂ → CH₂Br–CH₂Br", effect: .colorChange, effectColorHex: "#FEF3C7"),
+        ChemicalReaction(reagents: ["C2H4","H"], products: ["C2H6"], productNames: ["Этан"],
+            equation: "CH₂=CH₂ + H₂ → CH₃–CH₃ (кат.)", effect: .glow, effectColorHex: "#84CC16"),
+        ChemicalReaction(reagents: ["C2H4","H2O"], products: ["C2H5OH"], productNames: ["Этанол"],
+            equation: "CH₂=CH₂ + H₂O → C₂H₅OH (кат. H₃PO₄)", effect: .glow, effectColorHex: "#A3E635"),
+        ChemicalReaction(reagents: ["C2H2","Br"], products: ["C2H2Br2"], productNames: ["1,2-дибромэтен"],
+            equation: "CH≡CH + Br₂ → CHBr=CHBr", effect: .colorChange, effectColorHex: "#FEF3C7"),
+        ChemicalReaction(reagents: ["C2H2","H"], products: ["C2H4"], productNames: ["Этилен"],
+            equation: "CH≡CH + H₂ → CH₂=CH₂ (кат.)", effect: .glow, effectColorHex: "#65A30D"),
+        ChemicalReaction(reagents: ["C2H2","H2O"], products: ["CH3CHO"], productNames: ["Ацетальдегид"],
+            equation: "CH≡CH + H₂O → CH₃CHO (кат. Hg²⁺)", effect: .glow, effectColorHex: "#FDE68A"),
+        ChemicalReaction(reagents: ["C2H5OH","Na"], products: ["C2H5ONa"], productNames: ["Этилат натрия"],
+            equation: "2C₂H₅OH + 2Na → 2C₂H₅ONa + H₂↑", effect: .gas, effectColorHex: "#E0F2FE",
+            warning: "⚠️ Натрий реагирует с этанолом так же бурно, как с водой! Водород может воспламениться."),
+        ChemicalReaction(reagents: ["C2H5OH","CuO"], products: ["CH3CHO"], productNames: ["Ацетальдегид"],
+            equation: "C₂H₅OH + CuO → CH₃CHO + Cu + H₂O (t°)", effect: .colorChange, effectColorHex: "#DC2626"),
+        ChemicalReaction(reagents: ["C2H5OH","O"], products: ["CH3CHO"], productNames: ["Ацетальдегид"],
+            equation: "2C₂H₅OH + O₂ → 2CH₃CHO + 2H₂O (кат. Cu)", effect: .glow, effectColorHex: "#FDE68A"),
+        ChemicalReaction(reagents: ["CH3OH","O"], products: ["HCHO"], productNames: ["Формальдегид"],
+            equation: "2CH₃OH + O₂ → 2HCHO + 2H₂O (кат. Cu)", effect: .glow, effectColorHex: "#FDE68A",
+            warning: "⚠️ Формальдегид токсичен! Работать под тягой."),
+        ChemicalReaction(reagents: ["CH3COOH","NaOH"], products: ["CH3COONa"], productNames: ["Ацетат натрия"],
             equation: "CH₃COOH + NaOH → CH₃COONa + H₂O", effect: .glow, effectColorHex: "#BEF264"),
-        ChemicalReaction(reagents: ["CH3COOH", "Na2CO3"], products: ["CH3COONa"], productNames: ["Ацетат натрия"],
+        ChemicalReaction(reagents: ["CH3COOH","Na2CO3"], products: ["CH3COONa"], productNames: ["Ацетат натрия"],
             equation: "2CH₃COOH + Na₂CO₃ → 2CH₃COONa + H₂O + CO₂↑", effect: .gas, effectColorHex: "#F1F5F9"),
+        ChemicalReaction(reagents: ["CH3COOH","C2H5OH"], products: ["CH3COOC2H5"], productNames: ["Этилацетат"],
+            equation: "CH₃COOH + C₂H₅OH ⇄ CH₃COOC₂H₅ + H₂O (H₂SO₄, t°)", effect: .glow, effectColorHex: "#FDE68A"),
+        ChemicalReaction(reagents: ["C6H6","Br"], products: ["C6H5Br"], productNames: ["Бромбензол"],
+            equation: "C₆H₆ + Br₂ → C₆H₅Br + HBr (кат. FeBr₃)", effect: .colorChange, effectColorHex: "#FB923C"),
+        ChemicalReaction(reagents: ["C6H6","H"], products: ["C6H12"], productNames: ["Циклогексан"],
+            equation: "C₆H₆ + 3H₂ → C₆H₁₂ (кат., t°, p)", effect: .glow, effectColorHex: "#FB923C"),
     ]
 
     static func findReaction(_ a: String, _ b: String) -> ChemicalReaction? {
