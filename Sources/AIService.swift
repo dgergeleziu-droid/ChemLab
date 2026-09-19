@@ -6,7 +6,7 @@ class AIService: ObservableObject {
     @Published var errorMessage: String? = nil
 
     // ⚠️ ВСТАВЬ СВОЙ BASE64-КЛЮЧ (ClientID:ClientSecret)
-    private let authKey = "ВСТАВЬ_СЮДА_СВОЙ_CLIENT_ID:CLIENT_SECRET_В_BASE64"
+    private let authKey = "MDFhMGJhOWQtMTU4MS03NjkzLThiNzUtM2Q4NGFjMzRjZjhmOmM4NjYyOWE1LWYwOWMtNDVjOS1hYjMyLTljNGJmOGI3OTUzMA=="
 
     private let oauthURL = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
     private let apiURL = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
