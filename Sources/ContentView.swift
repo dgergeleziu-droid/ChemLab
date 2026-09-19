@@ -48,8 +48,11 @@ struct LabView: View {
     @State private var toastMessage: String? = nil
     @State private var pendingReaction: PendingReaction? = nil
     @State private var noReactionInfo: NoReactionInfo? = nil
+    @State private var conditionsInfo: ConditionsInfo? = nil
     @State private var warnedPairs: Set<String> = []
     @State private var reactingItems: Set<UUID> = []
+    @State private var activeConditions: Set<ConditionType> = []
+    @State private var showConditionsPanel = false
 
     var body: some View {
         GeometryReader { geo in
@@ -61,7 +64,39 @@ struct LabView: View {
                     bottomPanel
                 }
                 if showIntro { IntroOverlay { withAnimation { showIntro = false } } }
-                if let msg = toastMessage, pendingReaction == nil, noReactionInfo == nil {
+
+                // Верхняя строка: чипы активных условий + кнопка "условия"
+                VStack {
+                    HStack(spacing: 6) {
+                        conditionsBadges
+                        Spacer()
+                        Button {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                showConditionsPanel.toggle()
+                            }
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: "slider.horizontal.3")
+                                Text("Условия")
+                            }
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12).padding(.vertical, 8)
+                            .background(Color(hex: showConditionsPanel ? "#3B82F6" : "#1E293B"))
+                            .cornerRadius(20)
+                        }
+                    }
+                    .padding(.horizontal, 14).padding(.top, 6)
+
+                    if showConditionsPanel {
+                        ConditionsPanel(active: $activeConditions)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+
+                    Spacer()
+                }
+
+                if let msg = toastMessage, pendingReaction == nil, noReactionInfo == nil, conditionsInfo == nil {
                     VStack {
                         Spacer()
                         Text(msg).font(.system(size: 14, weight: .semibold))
@@ -75,6 +110,11 @@ struct LabView: View {
                     NoReactionOverlay(info: nr) {
                         withAnimation(.easeOut(duration: 0.2)) { noReactionInfo = nil }
                     }.zIndex(200)
+                }
+                if let ci = conditionsInfo {
+                    ConditionsOverlay(info: ci) {
+                        withAnimation(.easeOut(duration: 0.2)) { conditionsInfo = nil }
+                    }.zIndex(210)
                 }
             }
         }
@@ -94,6 +134,30 @@ struct LabView: View {
                 addReagent(r)
             }
             incomingReagents = []
+        }
+    }
+
+    var conditionsBadges: some View {
+        HStack(spacing: 4) {
+            if activeConditions.isEmpty {
+                Text("Условия: обычные")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Color(hex: "#64748B"))
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(Color(hex: "#1E293B").opacity(0.7))
+                    .cornerRadius(14)
+            } else {
+                ForEach(Array(activeConditions).sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { c in
+                    HStack(spacing: 3) {
+                        Image(systemName: c.icon).font(.system(size: 9))
+                        Text(c.shortLabel).font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8).padding(.vertical, 5)
+                    .background(Color(hex: "#3B82F6"))
+                    .cornerRadius(12)
+                }
+            }
         }
     }
 
@@ -183,7 +247,7 @@ struct LabView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { withAnimation { toastMessage = nil } }
     }
 
-    // MARK: - ПРОВЕРКА РЕАКЦИЙ
+    // MARK: - ПРОВЕРКА РЕАКЦИЙ (с учётом условий)
     func checkReactions() {
         let th: CGFloat = 130
         let reagents = items.filter { $0.kind == .reagent }
@@ -202,6 +266,28 @@ struct LabView: View {
                 let key = [a.symbol, b.symbol].sorted().joined(separator: "+")
 
                 if let r = ChemistryData.findReaction(a.symbol, b.symbol) {
+
+                    // Проверяем условия
+                    let needed = r.requiredConditions
+                    let missing = needed.subtracting(activeConditions)
+
+                    if !missing.isEmpty {
+                        // Условий не хватает — показываем подсказку
+                        let alreadyWarned = warnedPairs.contains("cond_" + key)
+                        if !alreadyWarned {
+                            warnedPairs.insert("cond_" + key)
+                            let nameA = ChemistryData.findReagent(by: a.symbol)?.name ?? a.symbol
+                            let nameB = ChemistryData.findReagent(by: b.symbol)?.name ?? b.symbol
+                            conditionsInfo = ConditionsInfo(
+                                title: "⚙️ Нужны другие условия",
+                                message: "\(nameA) и \(nameB) могут реагировать, но для этого нужны особые условия.\n\nНе хватает: \(missing.map { $0.rawValue }.joined(separator: ", ")).\n\nОткрой панель «Условия» и включи их, затем снова соедини вещества.",
+                                missing: missing
+                            )
+                        }
+                        return
+                    }
+
+                    // Условия выполнены — идём дальше
                     if r.warning != nil {
                         pendingReaction = PendingReaction(reaction: r, aID: a.id, bID: b.id,
                             aSymbol: a.symbol, bSymbol: b.symbol, aPos: a.worldPosition, bPos: b.worldPosition)
@@ -213,13 +299,14 @@ struct LabView: View {
                     }
                 }
 
+                // Реакции нет вообще
                 if !warnedPairs.contains(key) {
                     warnedPairs.insert(key)
                     let nameA = ChemistryData.findReagent(by: a.symbol)?.name ?? a.symbol
                     let nameB = ChemistryData.findReagent(by: b.symbol)?.name ?? b.symbol
                     noReactionInfo = NoReactionInfo(
-                        title: "🤷 Реакция не найдена",
-                        message: "\(nameA) (\(a.symbol)) и \(nameB) (\(b.symbol)) не взаимодействуют друг с другом при обычных условиях.\n\nПопробуй соединить с другими веществами или проверь условия реакции."
+                        title: "🚫 Реакции нет",
+                        message: "\(nameA) (\(a.symbol)) и \(nameB) (\(b.symbol)) не взаимодействуют друг с другом ни при каких обычных условиях.\n\nПодсказка: проверь формулы и убедись, что эти вещества в принципе могут реагировать."
                     )
                     return
                 }
@@ -227,32 +314,21 @@ struct LabView: View {
         }
     }
 
-    // MARK: - ЗАПУСК РЕАКЦИИ (элементы НЕ исчезают — сначала течёт продукт 15 сек)
     func applyReaction(reaction: ChemicalReaction, aID: UUID, bID: UUID, aPos: CGPoint, bPos: CGPoint) {
-
         let mx = (aPos.x + bPos.x) / 2
         let my = (aPos.y + bPos.y) / 2
-
-        // Помечаем элементы как "реагирующие" — больше не сработают
         reactingItems.insert(aID)
         reactingItems.insert(bID)
 
-        // Создаём эффект-поток на 15 секунд
         let effect = EffectAnimation(
             position: CGPoint(x: mx, y: my),
             color: Color(hex: reaction.effectColorHex),
             type: reaction.effect,
             duration: 15.0
         )
-
-        withAnimation(.easeOut(duration: 0.3)) {
-            effects.append(effect)
-        }
-
-        // Показываем подсказку, что реакция идёт
+        withAnimation(.easeOut(duration: 0.3)) { effects.append(effect) }
         showToast("⚗️ Идёт реакция... \(reaction.equation)")
 
-        // Готовим продукты заранее
         var productItems: [WorldItem] = []
         for (i, sym) in reaction.products.enumerated() {
             let color = ChemistryData.findReagent(by: sym)?.colorHex ?? "#94A3B8"
@@ -264,13 +340,9 @@ struct LabView: View {
         let equationItem = WorldItem(
             symbol: "eq", displayName: "Уравнение",
             worldPosition: CGPoint(x: mx, y: my - 90),
-            kind: .equation, colorHex: "#3B82F6",
-            equationText: reaction.equation
+            kind: .equation, colorHex: "#3B82F6", equationText: reaction.equation
         )
-
         let eid = effect.id
-
-        // Через 15 секунд: убираем реагенты, поток, добавляем продукты
         DispatchQueue.main.asyncAfter(deadline: .now() + effect.duration) {
             withAnimation(.easeOut(duration: 0.5)) {
                 items.removeAll { $0.id == aID || $0.id == bID }
@@ -285,7 +357,56 @@ struct LabView: View {
     }
 }
 
-// MARK: - ОКНО "РЕАКЦИЯ НЕ НАЙДЕНА"
+// MARK: - ПАНЕЛЬ УСЛОВИЙ
+struct ConditionsPanel: View {
+    @Binding var active: Set<ConditionType>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Условия реакции")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Button {
+                    active.removeAll()
+                } label: {
+                    Text("Сбросить")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(Color(hex: "#94A3B8"))
+                }
+            }
+            ForEach(ConditionType.allCases, id: \.self) { c in
+                Button {
+                    if active.contains(c) { active.remove(c) } else { active.insert(c) }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: c.icon)
+                            .font(.system(size: 14))
+                            .foregroundColor(active.contains(c) ? .white : Color(hex: "#64748B"))
+                            .frame(width: 20)
+                        Text(c.rawValue)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(active.contains(c) ? .white : Color(hex: "#94A3B8"))
+                        Spacer()
+                        Image(systemName: active.contains(c) ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 16))
+                            .foregroundColor(active.contains(c) ? Color(hex: "#22C55E") : Color(hex: "#475569"))
+                    }
+                    .padding(12)
+                    .background(RoundedRectangle(cornerRadius: 10)
+                        .fill(active.contains(c) ? Color(hex: "#1E3A8A").opacity(0.6) : Color(hex: "#1E293B")))
+                }
+            }
+        }
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color(hex: "#0F172A"))
+            .shadow(color: .black.opacity(0.5), radius: 16, x: 0, y: 6))
+        .padding(.horizontal, 14).padding(.top, 8)
+    }
+}
+
+// MARK: - ОКНА
 struct NoReactionInfo: Identifiable {
     let id = UUID()
     let title: String
@@ -300,9 +421,9 @@ struct NoReactionOverlay: View {
             Color.black.opacity(0.65).ignoresSafeArea().onTapGesture { onClose() }
             VStack(spacing: 16) {
                 ZStack {
-                    Circle().fill(Color(hex: "#3B82F6").opacity(0.18)).frame(width: 80, height: 80)
-                    Image(systemName: "questionmark.circle.fill")
-                        .font(.system(size: 42)).foregroundColor(Color(hex: "#3B82F6"))
+                    Circle().fill(Color(hex: "#EF4444").opacity(0.15)).frame(width: 80, height: 80)
+                    Image(systemName: "xmark.octagon.fill")
+                        .font(.system(size: 42)).foregroundColor(Color(hex: "#EF4444"))
                 }
                 Text(info.title).font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white).multilineTextAlignment(.center)
@@ -310,9 +431,9 @@ struct NoReactionOverlay: View {
                     .foregroundColor(Color(hex: "#CBD5E1")).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true).lineSpacing(3)
                 Button(action: onClose) {
-                    Text("Ясно").font(.system(size: 16, weight: .bold))
+                    Text("Понял").font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white).frame(maxWidth: .infinity)
-                        .padding(.vertical, 13).background(Color(hex: "#3B82F6")).cornerRadius(12)
+                        .padding(.vertical, 13).background(Color(hex: "#EF4444")).cornerRadius(12)
                 }.padding(.top, 4)
             }
             .padding(24)
@@ -323,7 +444,47 @@ struct NoReactionOverlay: View {
     }
 }
 
-// MARK: - ЭКЗАМЕН (без изменений)
+// Окно "нужны другие условия"
+struct ConditionsInfo: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+    let missing: Set<ConditionType>
+}
+
+struct ConditionsOverlay: View {
+    let info: ConditionsInfo
+    let onClose: () -> Void
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.65).ignoresSafeArea().onTapGesture { onClose() }
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle().fill(Color(hex: "#F59E0B").opacity(0.18)).frame(width: 80, height: 80)
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 40)).foregroundColor(Color(hex: "#F59E0B"))
+                }
+                Text(info.title).font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white).multilineTextAlignment(.center)
+                Text(info.message).font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color(hex: "#CBD5E1")).multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true).lineSpacing(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Button(action: onClose) {
+                    Text("Понятно").font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white).frame(maxWidth: .infinity)
+                        .padding(.vertical, 13).background(Color(hex: "#F59E0B")).cornerRadius(12)
+                }.padding(.top, 4)
+            }
+            .padding(24)
+            .background(RoundedRectangle(cornerRadius: 22).fill(Color(hex: "#1E293B"))
+                .shadow(color: .black.opacity(0.5), radius: 24, x: 0, y: 12))
+            .padding(.horizontal, 28)
+        }
+    }
+}
+
+// MARK: - ЭКЗАМЕН
 struct ExamView: View {
     @State private var variant: ExamVariant? = nil
     @State private var currentIndex: Int = 0
@@ -557,6 +718,7 @@ struct IntroOverlay: View {
                     row(icon: "hand.draw", text: "Перетаскивай элементы пальцем")
                     row(icon: "arrow.left.and.right", text: "Двигай холст одним пальцем, масштабируй двумя")
                     row(icon: "flame", text: "Соедини два реагента — из них потечёт продукт 15 сек")
+                    row(icon: "slider.horizontal.3", text: "Меняй условия (нагрев, катализатор, свет, давление)")
                     row(icon: "hand.tap.fill", text: "Двойной тап по элементу — удалить")
                     row(icon: "pencil.and.list.clipboard", text: "Режимы: Лаборатория, ОГЭ, Редактор")
                 }.padding(16).background(Color(hex: "#1E293B")).cornerRadius(16).padding(.horizontal, 8)
