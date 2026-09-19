@@ -18,7 +18,7 @@ struct ContentView: View {
                     Text("📝 ОГЭ").tag(AppMode.exam)
                     Text("✏️ Ред").tag(AppMode.editor)
                 }
-                .pickerStyle(.segmented).frame(width: 280)
+                .pickerStyle(.segmented).frame(width: 260)
                 .padding(.trailing, 16).padding(.top, 8)
             }
         }
@@ -56,43 +56,28 @@ struct LabView: View {
 
     var body: some View {
         GeometryReader { geo in
+            let isLandscape = geo.size.width > geo.size.height
+
             ZStack {
                 Color(hex: "#0B1020").ignoresSafeArea()
+
                 VStack(spacing: 0) {
-                    Color.clear.frame(height: 50)
-                    canvasArea(size: geo.size)
-                    bottomPanel
+                    Color.clear.frame(height: isLandscape ? 24 : 52)
+                    canvasArea(size: geo.size, isLandscape: isLandscape)
+                    bottomPanel(isLandscape: isLandscape)
                 }
+
                 if showIntro { IntroOverlay { withAnimation { showIntro = false } } }
 
-                VStack {
-                    HStack(spacing: 6) {
-                        conditionsBadges
-                        Spacer()
-                        Button {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                showConditionsPanel.toggle()
-                            }
-                        } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: "slider.horizontal.3")
-                                Text("Условия")
-                            }
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12).padding(.vertical, 8)
-                            .background(Color(hex: showConditionsPanel ? "#3B82F6" : "#1E293B"))
-                            .cornerRadius(20)
-                        }
-                    }
-                    .padding(.horizontal, 14).padding(.top, 6)
-
-                    if showConditionsPanel {
+                // Панель условий (выезжает сверху)
+                if showConditionsPanel {
+                    VStack {
                         ConditionsPanel(active: $activeConditions)
                             .transition(.opacity.combined(with: .move(edge: .top)))
+                        Spacer()
                     }
-
-                    Spacer()
+                    .padding(.top, isLandscape ? 24 : 52)
+                    .zIndex(150)
                 }
 
                 if let msg = toastMessage, pendingReaction == nil, noReactionInfo == nil, conditionsInfo == nil {
@@ -136,6 +121,7 @@ struct LabView: View {
         }
     }
 
+    // Чипы активных условий (слева вверху, не пересекаются с переключателем режимов)
     var conditionsBadges: some View {
         HStack(spacing: 4) {
             if activeConditions.isEmpty {
@@ -160,7 +146,7 @@ struct LabView: View {
         }
     }
 
-    func canvasArea(size: CGSize) -> some View {
+    func canvasArea(size: CGSize, isLandscape: Bool) -> some View {
         ZStack {
             Color.clear.contentShape(Rectangle())
                 .gesture(SimultaneousGesture(
@@ -178,25 +164,65 @@ struct LabView: View {
                         .onChanged { v in canvasScale = min(max(lastCanvasScale * v, 0.35), 3.5) }
                         .onEnded { _ in lastCanvasScale = canvasScale }
                 ))
+
             CanvasView(items: $items, effects: $effects, canvasScale: canvasScale,
                        canvasOffset: canvasOffset, screenSize: size,
                        onDragEnd: { checkReactions() },
                        onDelete: { id in withAnimation { items.removeAll { $0.id == id } } },
                        onItemDragChange: { isDraggingItem = $0 })
+
+            // Чипы условий — слева вверху
+            VStack {
+                HStack {
+                    conditionsBadges
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 6)
+                Spacer()
+            }
+
+            // Кнопки «Условия» и «Сброс зума» — справа снизу
             VStack {
                 Spacer()
                 HStack {
                     Spacer()
-                    Button {
-                        withAnimation {
-                            canvasScale = 1; lastCanvasScale = 1
-                            canvasOffset = .zero; lastCanvasOffset = .zero
+                    VStack(spacing: 10) {
+                        Button {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                showConditionsPanel.toggle()
+                            }
+                        } label: {
+                            VStack(spacing: 2) {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.system(size: 16, weight: .semibold))
+                                Text("Условия")
+                                    .font(.system(size: 8, weight: .semibold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(10)
+                            .background(Color(hex: showConditionsPanel ? "#3B82F6" : "#1E293B").opacity(0.95))
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle().stroke(
+                                    activeConditions.isEmpty ? Color.clear : Color(hex: "#22C55E"),
+                                    lineWidth: 2
+                                )
+                            )
                         }
-                    } label: {
-                        Image(systemName: "arrow.counterclockwise")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white).padding(10)
-                            .background(Color(hex: "#1E293B").opacity(0.9)).clipShape(Circle())
+
+                        Button {
+                            withAnimation {
+                                canvasScale = 1; lastCanvasScale = 1
+                                canvasOffset = .zero; lastCanvasOffset = .zero
+                            }
+                        } label: {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white).padding(10)
+                                .background(Color(hex: "#1E293B").opacity(0.9))
+                                .clipShape(Circle())
+                        }
                     }
                     .padding(.trailing, 14).padding(.bottom, 14)
                 }
@@ -204,29 +230,36 @@ struct LabView: View {
         }
     }
 
-    var bottomPanel: some View {
-        VStack(spacing: 8) {
+    func bottomPanel(isLandscape: Bool) -> some View {
+        VStack(spacing: isLandscape ? 4 : 8) {
             HStack(spacing: 8) {
                 ForEach(ReagentGroup.allCases, id: \.self) { g in
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) { selectedGroup = g }
                     } label: {
-                        Text(g.rawValue).font(.system(size: 12, weight: .semibold))
+                        Text(g.rawValue).font(.system(size: isLandscape ? 11 : 12, weight: .semibold))
                             .foregroundColor(selectedGroup == g ? .white : Color(hex: "#94A3B8"))
-                            .padding(.horizontal, 14).padding(.vertical, 7)
+                            .padding(.horizontal, isLandscape ? 10 : 14)
+                            .padding(.vertical, isLandscape ? 4 : 7)
                             .background(Capsule().fill(selectedGroup == g ? Color(hex: "#3B82F6") : Color(hex: "#1E293B")))
                     }
                 }
                 Spacer()
-            }.padding(.horizontal, 12).padding(.top, 10)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(ChemistryData.reagents.filter { $0.group == selectedGroup }) { r in
-                        ReagentChip(reagent: r) { addReagent(r) }
-                    }
-                }.padding(.horizontal, 12).padding(.bottom, 12)
             }
-        }.background(Color(hex: "#0F172A"))
+            .padding(.horizontal, 12)
+            .padding(.top, isLandscape ? 4 : 10)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: isLandscape ? 8 : 10) {
+                    ForEach(ChemistryData.reagents.filter { $0.group == selectedGroup }) { r in
+                        ReagentChip(reagent: r, size: isLandscape ? 40 : 54) { addReagent(r) }
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, isLandscape ? 6 : 12)
+            }
+        }
+        .background(Color(hex: "#0F172A"))
     }
 
     func addReagent(_ r: Reagent) {
@@ -275,7 +308,7 @@ struct LabView: View {
                             let nameB = ChemistryData.findReagent(by: b.symbol)?.name ?? b.symbol
                             conditionsInfo = ConditionsInfo(
                                 title: "⚙️ Нужны другие условия",
-                                message: "\(nameA) и \(nameB) могут реагировать, но нужны особые условия.\n\nНе хватает: \(missing.map { $0.rawValue }.joined(separator: ", ")).\n\nОткрой панель «Условия», включи их и снова соедини вещества.",
+                                message: "\(nameA) и \(nameB) могут реагировать, но нужны особые условия.\n\nНе хватает: \(missing.map { $0.rawValue }.joined(separator: ", ")).\n\nОткрой панель «Условия» (справа снизу), включи их и снова соедини вещества.",
                                 missing: missing
                             )
                         }
@@ -307,45 +340,48 @@ struct LabView: View {
         }
     }
 
+    // ⚡ ГЛАВНОЕ ИЗМЕНЕНИЕ: мгновенное соединение + эффект 10 сек от продукта
     func applyReaction(reaction: ChemicalReaction, aID: UUID, bID: UUID, aPos: CGPoint, bPos: CGPoint) {
         let mx = (aPos.x + bPos.x) / 2
         let my = (aPos.y + bPos.y) / 2
-        reactingItems.insert(aID)
-        reactingItems.insert(bID)
 
-        // ⚠️ Без параметра duration — используется значение по умолчанию из Models.swift
-        let effect = EffectAnimation(
-            position: CGPoint(x: mx, y: my),
-            color: Color(hex: reaction.effectColorHex),
-            type: reaction.effect
-        )
-        withAnimation(.easeOut(duration: 0.3)) { effects.append(effect) }
-        showToast("⚗️ Идёт реакция... \(reaction.equation)")
-
-        var productItems: [WorldItem] = []
+        // 1. Сразу создаём продукты
+        var newItems: [WorldItem] = []
         for (i, sym) in reaction.products.enumerated() {
             let color = ChemistryData.findReagent(by: sym)?.colorHex ?? "#94A3B8"
             let name = reaction.productNames.indices.contains(i) ? reaction.productNames[i] : sym
-            productItems.append(WorldItem(symbol: sym, displayName: name,
-                worldPosition: CGPoint(x: mx + CGFloat(i) * 90, y: my + 70),
+            newItems.append(WorldItem(symbol: sym, displayName: name,
+                worldPosition: CGPoint(x: mx + CGFloat(i) * 90, y: my),
                 kind: .product, colorHex: color))
         }
         let equationItem = WorldItem(
             symbol: "eq", displayName: "Уравнение",
-            worldPosition: CGPoint(x: mx, y: my - 90),
+            worldPosition: CGPoint(x: mx, y: my - 100),
             kind: .equation, colorHex: "#3B82F6", equationText: reaction.equation
         )
+
+        // 2. Эффект "течёт из-под продукта" — позиция чуть ниже продукта
+        let effect = EffectAnimation(
+            position: CGPoint(x: mx, y: my + 50),
+            color: Color(hex: reaction.effectColorHex),
+            type: reaction.effect
+        )
+
+        // 3. Мгновенно: убираем реагенты, добавляем продукты и эффект
+        withAnimation(.easeOut(duration: 0.3)) {
+            items.removeAll { $0.id == aID || $0.id == bID }
+            items.append(contentsOf: newItems)
+            items.append(equationItem)
+            effects.append(effect)
+        }
+        showToast("⚗️ \(reaction.equation)")
+
+        // 4. Через 10 секунд эффект сам заканчивается, продукт остаётся
         let eid = effect.id
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
             withAnimation(.easeOut(duration: 0.5)) {
-                items.removeAll { $0.id == aID || $0.id == bID }
-                items.append(contentsOf: productItems)
-                items.append(equationItem)
                 effects.removeAll { $0.id == eid }
             }
-            reactingItems.remove(aID)
-            reactingItems.remove(bID)
-            showToast("✓ Получено: \(reaction.products.joined(separator: " + "))")
         }
     }
 }
@@ -355,7 +391,7 @@ struct ConditionsPanel: View {
     @Binding var active: Set<ConditionType>
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Условия реакции")
                     .font(.system(size: 14, weight: .bold))
@@ -379,20 +415,20 @@ struct ConditionsPanel: View {
                             .foregroundColor(active.contains(c) ? .white : Color(hex: "#64748B"))
                             .frame(width: 20)
                         Text(c.rawValue)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundColor(active.contains(c) ? .white : Color(hex: "#94A3B8"))
                         Spacer()
                         Image(systemName: active.contains(c) ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: 16))
                             .foregroundColor(active.contains(c) ? Color(hex: "#22C55E") : Color(hex: "#475569"))
                     }
-                    .padding(12)
+                    .padding(10)
                     .background(RoundedRectangle(cornerRadius: 10)
                         .fill(active.contains(c) ? Color(hex: "#1E3A8A").opacity(0.6) : Color(hex: "#1E293B")))
                 }
             }
         }
-        .padding(14)
+        .padding(12)
         .background(RoundedRectangle(cornerRadius: 16).fill(Color(hex: "#0F172A"))
             .shadow(color: .black.opacity(0.5), radius: 16, x: 0, y: 6))
         .padding(.horizontal, 14).padding(.top, 8)
@@ -675,6 +711,7 @@ struct ExamView: View {
 // MARK: - Вспомогательные
 struct ReagentChip: View {
     let reagent: Reagent
+    var size: CGFloat = 54
     let action: () -> Void
     var body: some View {
         Button(action: action) {
@@ -682,17 +719,27 @@ struct ReagentChip: View {
                 ZStack {
                     Circle().fill(RadialGradient(
                         gradient: Gradient(colors: [Color(hex: reagent.colorHex), Color(hex: reagent.colorHex).opacity(0.55)]),
-                        center: .topLeading, startRadius: 4, endRadius: 40))
-                        .frame(width: 54, height: 54)
+                        center: .topLeading, startRadius: 4, endRadius: size))
+                        .frame(width: size, height: size)
                         .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 1))
                     Text(reagent.symbol)
-                        .font(.system(size: reagent.symbol.count > 3 ? 10 : (reagent.symbol.count > 2 ? 13 : 17), weight: .bold))
+                        .font(.system(size: fontSizeForSymbol()))
+                        .fontWeight(.bold)
                         .foregroundColor(.white).minimumScaleFactor(0.5).lineLimit(1).padding(.horizontal, 2)
                 }
-                Text(reagent.name).font(.system(size: 9, weight: .medium))
-                    .foregroundColor(Color(hex: "#94A3B8")).lineLimit(1).frame(width: 64)
+                if size >= 50 {
+                    Text(reagent.name).font(.system(size: 9, weight: .medium))
+                        .foregroundColor(Color(hex: "#94A3B8")).lineLimit(1).frame(width: 64)
+                }
             }
         }
+    }
+
+    func fontSizeForSymbol() -> CGFloat {
+        let base: CGFloat = size >= 50 ? 17 : 13
+        if reagent.symbol.count > 3 { return base - 5 }
+        if reagent.symbol.count > 2 { return base - 3 }
+        return base
     }
 }
 
@@ -701,25 +748,28 @@ struct IntroOverlay: View {
     var body: some View {
         ZStack {
             Color.black.opacity(0.85).ignoresSafeArea()
-            VStack(spacing: 18) {
-                Text("🧪 ХимЛаб").font(.system(size: 30, weight: .bold)).foregroundColor(.white)
-                Text("Интерактивная песочница + подготовка к ОГЭ")
-                    .font(.system(size: 14)).foregroundColor(Color(hex: "#94A3B8")).multilineTextAlignment(.center)
-                VStack(alignment: .leading, spacing: 12) {
-                    row(icon: "hand.tap", text: "Тапни по элементу внизу — он появится на холсте")
-                    row(icon: "hand.draw", text: "Перетаскивай элементы пальцем")
-                    row(icon: "arrow.left.and.right", text: "Двигай холст одним пальцем, масштабируй двумя")
-                    row(icon: "flame", text: "Соедини два реагента — из них потечёт продукт 15 сек")
-                    row(icon: "slider.horizontal.3", text: "Меняй условия (нагрев, катализатор, свет, давление)")
-                    row(icon: "hand.tap.fill", text: "Двойной тап по элементу — удалить")
-                    row(icon: "pencil.and.list.clipboard", text: "Режимы: Лаборатория, ОГЭ, Редактор")
-                }.padding(16).background(Color(hex: "#1E293B")).cornerRadius(16).padding(.horizontal, 8)
-                Button(action: onClose) {
-                    Text("Начать").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
-                        .frame(maxWidth: .infinity).padding(.vertical, 14)
-                        .background(Color(hex: "#3B82F6")).cornerRadius(14)
-                }
-            }.padding(24)
+            ScrollView {
+                VStack(spacing: 18) {
+                    Text("🧪 ХимЛаб").font(.system(size: 30, weight: .bold)).foregroundColor(.white)
+                    Text("Интерактивная песочница + подготовка к ОГЭ")
+                        .font(.system(size: 14)).foregroundColor(Color(hex: "#94A3B8")).multilineTextAlignment(.center)
+                    VStack(alignment: .leading, spacing: 12) {
+                        row(icon: "hand.tap", text: "Тапни по элементу внизу — он появится на холсте")
+                        row(icon: "hand.draw", text: "Перетаскивай элементы пальцем")
+                        row(icon: "arrow.left.and.right", text: "Двигай холст одним пальцем, масштабируй двумя")
+                        row(icon: "flame", text: "Соедини два реагента — они сразу превратятся в продукт")
+                        row(icon: "drop.fill", text: "От продукта ещё 10 сек идёт эффект (вода, газ, осадок)")
+                        row(icon: "slider.horizontal.3", text: "Кнопка «Условия» — справа снизу (нагрев, кат., свет)")
+                        row(icon: "hand.tap.fill", text: "Двойной тап по элементу — удалить")
+                        row(icon: "pencil.and.list.clipboard", text: "Режимы: Лаборатория, ОГЭ, Редактор")
+                    }.padding(16).background(Color(hex: "#1E293B")).cornerRadius(16).padding(.horizontal, 8)
+                    Button(action: onClose) {
+                        Text("Начать").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                            .frame(maxWidth: .infinity).padding(.vertical, 14)
+                            .background(Color(hex: "#3B82F6")).cornerRadius(14)
+                    }
+                }.padding(24)
+            }
         }
     }
     func row(icon: String, text: String) -> some View {
