@@ -136,47 +136,37 @@ struct DraggableItemView: View {
     }
 }
 
-// MARK: - ЭФФЕКТ РЕАКЦИИ — 10 СЕКУНД
+// MARK: - ЭФФЕКТЫ
 struct ReactionEffectView: View {
     let effect: EffectAnimation
     @State private var startDate = Date()
 
-    // Эффект длится 10 секунд
     let totalDuration: Double = 10.0
 
     var body: some View {
         TimelineView(.animation) { context in
             let elapsed = context.date.timeIntervalSince(startDate)
             let remaining = max(0, totalDuration - elapsed)
-            let intensity = min(1.0, remaining / 2.0)
+            let intensity = min(1.0, remaining / 1.5)
 
             ZStack {
                 switch effect.type {
-
-                case .explosion, .flash:
-                    // 0-1.5 сек: яркая вспышка
-                    let burstP = min(1.0, elapsed / 1.5)
-                    if burstP < 1.0 {
-                        explosionBurst(progress: burstP, intensity: 1.0)
-                    }
-                    // После вспышки: частицы падают вниз (вода, ржавчина, порошок)
-                    if remaining > 0 && burstP >= 1.0 {
-                        streamParticles(date: context.date, up: false, intensity: intensity)
-                    }
-
+                case .liquid:
+                    LiquidEffect(color: effect.color, date: context.date, intensity: intensity)
                 case .gas:
-                    // Поток вверх (газ)
-                    streamParticles(date: context.date, up: true, intensity: intensity)
-
-                case .precipitateWhite, .precipitateBlue, .precipitateBrown, .precipitateYellow:
-                    // Поток вниз (осадок)
-                    streamParticles(date: context.date, up: false, intensity: intensity)
-
+                    GasEffect(color: effect.color, date: context.date, intensity: intensity)
+                case .explosion, .flash:
+                    let burstP = min(1.0, elapsed / 1.2)
+                    if burstP < 1.0 {
+                        explosionBurst(progress: burstP)
+                    } else {
+                        GasEffect(color: effect.color, date: context.date, intensity: intensity * 0.7)
+                    }
+                case .precipitateWhite, .precipitateBlue,
+                     .precipitateBrown, .precipitateYellow:
+                    PrecipitateEffect(color: effect.color, date: context.date, intensity: intensity)
                 case .colorChange, .glow:
-                    // Пульсирующее свечение + лёгкий поток вниз
-                    gentleGlow(date: context.date, intensity: intensity)
-                    streamParticles(date: context.date, up: false, intensity: intensity * 0.5)
-
+                    GlowEffect(color: effect.color, date: context.date, intensity: intensity)
                 case .none:
                     EmptyView()
                 }
@@ -184,81 +174,204 @@ struct ReactionEffectView: View {
         }
     }
 
-    // Поток частиц (вверх или вниз)
-    func streamParticles(date: Date, up: Bool, intensity: Double) -> some View {
-        let now = date.timeIntervalSinceReferenceDate
-        let particleCount = 20
-        let cycle: Double = 1.6
-
-        return ZStack {
-            // Свечение у основания
-            Circle()
-                .fill(effect.color.opacity(0.35 * intensity))
-                .frame(width: 60, height: 60)
-                .blur(radius: 12)
-
-            ForEach(0..<particleCount, id: \.self) { i in
-                let phase = ((now + Double(i) * (cycle / Double(particleCount)))
-                             .truncatingRemainder(dividingBy: cycle)) / cycle
-                let directionMultiplier = up ? -1.0 : 1.0
-                let y = CGFloat(directionMultiplier * phase * 160)
-                let opacity = (1.0 - phase) * intensity
-                let size = 6.0 + phase * 12.0
-                let xo = CGFloat((i * 41) % 56) - 28
-
-                Circle()
-                    .fill(effect.color.opacity(opacity * 0.85))
-                    .frame(width: size, height: size)
-                    .offset(x: xo, y: y)
-            }
-
-            // Дополнительные мелкие капли
-            ForEach(0..<10, id: \.self) { i in
-                let phase = ((now + Double(i) * 0.22 + 0.5)
-                             .truncatingRemainder(dividingBy: cycle)) / cycle
-                let directionMultiplier = up ? -1.0 : 1.0
-                let y = CGFloat(directionMultiplier * phase * 130)
-                let opacity = (1.0 - phase) * intensity
-                let size = 3.0 + phase * 6.0
-                let xo = CGFloat((i * 67) % 44) - 22
-
-                Circle()
-                    .fill(effect.color.opacity(opacity * 0.7))
-                    .frame(width: size, height: size)
-                    .offset(x: xo, y: y)
-            }
-        }
-    }
-
-    // Пульсирующее свечение
-    func gentleGlow(date: Date, intensity: Double) -> some View {
-        let phase = (date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.4)) / 1.4
-        let scale = 0.7 + phase * 1.0
-        let opacity = (1.0 - phase) * 0.7 * intensity
-        return ZStack {
-            Circle().fill(effect.color.opacity(opacity)).frame(width: 100, height: 100).scaleEffect(scale)
-            Circle().fill(effect.color.opacity(opacity * 0.5)).frame(width: 140, height: 140).scaleEffect(scale * 1.2)
-        }
-    }
-
-    // Первоначальный взрыв
-    func explosionBurst(progress: Double, intensity: Double) -> some View {
+    func explosionBurst(progress: Double) -> some View {
         ZStack {
             Circle()
                 .fill(effect.color)
                 .frame(width: 60, height: 60)
                 .scaleEffect(0.3 + progress * 3.0)
-                .opacity((1.0 - progress) * 0.9 * intensity)
-
-            ForEach(0..<10, id: \.self) { i in
-                let angle = Double(i) / 10 * 2 * .pi
+                .opacity(1.0 - progress)
+            ForEach(0..<12, id: \.self) { i in
+                let angle = Double(i) / 12 * 2 * .pi
                 Circle()
                     .fill(effect.color)
-                    .frame(width: 8, height: 8)
-                    .offset(x: CGFloat(cos(angle)) * CGFloat(progress) * 90,
-                            y: CGFloat(sin(angle)) * CGFloat(progress) * 90)
-                    .opacity((1.0 - progress) * intensity)
+                    .frame(width: 10, height: 10)
+                    .offset(x: CGFloat(cos(angle)) * CGFloat(progress) * 100,
+                            y: CGFloat(sin(angle)) * CGFloat(progress) * 100)
+                    .opacity(1.0 - progress)
             }
+        }
+    }
+}
+
+// МАРК: Жидкость — струя течёт вниз
+struct LiquidEffect: View {
+    let color: Color
+    let date: Date
+    let intensity: Double
+
+    var body: some View {
+        let now = date.timeIntervalSinceReferenceDate
+        let cycle: Double = 1.8
+        let dropCount = 14
+
+        return ZStack {
+            // Свечение лужи внизу
+            Ellipse()
+                .fill(color.opacity(0.35 * intensity))
+                .frame(width: 60, height: 16)
+                .blur(radius: 8)
+                .offset(y: 130)
+
+            // Центральная струя
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [color.opacity(0.9 * intensity), color.opacity(0.3 * intensity)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+                .frame(width: 6, height: 140)
+                .offset(y: 70)
+                .blur(radius: 1)
+
+            // Капли
+            ForEach(0..<dropCount, id: \.self) { i in
+                let phase = ((now + Double(i) * (cycle / Double(dropCount)))
+                             .truncatingRemainder(dividingBy: cycle)) / cycle
+                let y = CGFloat(phase * 150)
+                let op = (1.0 - phase * 0.5) * intensity
+                let size = 5.0 + phase * 6.0
+                let xo = CGFloat((i * 37) % 20) - 10
+
+                Ellipse()
+                    .fill(color.opacity(op))
+                    .frame(width: size, height: size * 1.4)
+                    .offset(x: xo, y: y)
+            }
+
+            // Дополнительные брызги
+            ForEach(0..<8, id: \.self) { i in
+                let phase = ((now + Double(i) * 0.25 + 0.7)
+                             .truncatingRemainder(dividingBy: cycle)) / cycle
+                let y = CGFloat(phase * 120)
+                let op = (1.0 - phase) * intensity * 0.7
+                let size = 2.5 + phase * 3.0
+                let xo = CGFloat((i * 53) % 30) - 15
+
+                Circle()
+                    .fill(color.opacity(op))
+                    .frame(width: size, height: size)
+                    .offset(x: xo, y: y)
+            }
+        }
+    }
+}
+
+// MARK: - Газ — клубочки дыма поднимаются вверх
+struct GasEffect: View {
+    let color: Color
+    let date: Date
+    let intensity: Double
+
+    var body: some View {
+        let now = date.timeIntervalSinceReferenceDate
+        let cycle: Double = 2.5
+        let puffCount = 10
+
+        return ZStack {
+            // Струя свечения у основания
+            Circle()
+                .fill(color.opacity(0.3 * intensity))
+                .frame(width: 60, height: 60)
+                .blur(radius: 16)
+
+            // Клубы дыма
+            ForEach(0..<puffCount, id: \.self) { i in
+                let phase = ((now + Double(i) * (cycle / Double(puffCount)))
+                             .truncatingRemainder(dividingBy: cycle)) / cycle
+                let y = CGFloat(-phase * 140)
+                let op = (1.0 - phase) * intensity * 0.75
+                let size = 25.0 + phase * 45.0
+                let xo = CGFloat((i * 47) % 40) - 20
+                let wobble = sin(now * 1.5 + Double(i)) * 6.0
+
+                Circle()
+                    .fill(color.opacity(op))
+                    .frame(width: size, height: size)
+                    .blur(radius: size * 0.25)
+                    .offset(x: xo + CGFloat(wobble), y: y)
+            }
+
+            // Мелкие частички
+            ForEach(0..<6, id: \.self) { i in
+                let phase = ((now + Double(i) * 0.4 + 1.0)
+                             .truncatingRemainder(dividingBy: cycle)) / cycle
+                let y = CGFloat(-phase * 120)
+                let op = (1.0 - phase) * intensity * 0.5
+                let size = 8.0 + phase * 12.0
+
+                Circle()
+                    .fill(color.opacity(op))
+                    .frame(width: size, height: size)
+                    .blur(radius: 4)
+                    .offset(
+                        x: CGFloat((i * 61) % 50) - 25,
+                        y: y
+                    )
+            }
+        }
+    }
+}
+
+// MARK: - Осадок — твёрдые частицы падают
+struct PrecipitateEffect: View {
+    let color: Color
+    let date: Date
+    let intensity: Double
+
+    var body: some View {
+        let now = date.timeIntervalSinceReferenceDate
+        let cycle: Double = 1.8
+        let particleCount = 18
+
+        return ZStack {
+            // Свечение
+            Circle()
+                .fill(color.opacity(0.25 * intensity))
+                .frame(width: 60, height: 60)
+                .blur(radius: 14)
+
+            // Твёрдые крупинки падают
+            ForEach(0..<particleCount, id: \.self) { i in
+                let phase = ((now + Double(i) * (cycle / Double(particleCount)))
+                             .truncatingRemainder(dividingBy: cycle)) / cycle
+                let y = CGFloat(phase * 130)
+                let op = intensity * 0.9
+                let size = 4.0 + Double((i * 13) % 6)
+                let xo = CGFloat((i * 31) % 50) - 25
+
+                Circle()
+                    .fill(color.opacity(op))
+                    .frame(width: size, height: size)
+                    .offset(x: xo, y: y)
+            }
+        }
+    }
+}
+
+// MARK: - Свечение / изменение цвета
+struct GlowEffect: View {
+    let color: Color
+    let date: Date
+    let intensity: Double
+
+    var body: some View {
+        let phase = (date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.4)) / 1.4
+        let scale = 0.85 + phase * 0.8
+        let opacity = (1.0 - phase) * 0.6 * intensity
+
+        return ZStack {
+            Circle()
+                .fill(color.opacity(opacity * 0.7))
+                .frame(width: 100, height: 100)
+                .scaleEffect(scale)
+                .blur(radius: 12)
+
+            Circle()
+                .fill(color.opacity(opacity))
+                .frame(width: 60, height: 60)
+                .blur(radius: 8)
         }
     }
 }
