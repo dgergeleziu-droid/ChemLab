@@ -1,54 +1,50 @@
 import SwiftUI
 
-// MARK: - Бесконечный холст
 struct CanvasView: View {
     @Binding var items: [WorldItem]
     @Binding var effects: [EffectAnimation]
     let canvasScale: CGFloat
     let canvasOffset: CGSize
     let screenSize: CGSize
-    let onMove: (UUID, CGPoint) -> Void
     let onDragEnd: () -> Void
     let onDelete: (UUID) -> Void
+    let onItemDragChange: (Bool) -> Void
 
     var body: some View {
         ZStack {
-            // Сетка
+            // Сетка — только фон
             GridCanvas(scale: canvasScale, offset: canvasOffset)
                 .allowsHitTesting(false)
 
-            // Предметы
+            // Элементы
             ForEach($items) { $item in
                 DraggableItemView(
                     item: $item,
                     scale: canvasScale,
                     onDragEnd: onDragEnd,
-                    onDelete: { onDelete(item.id) }
+                    onDelete: { onDelete(item.id) },
+                    onDragChange: onItemDragChange
                 )
                 .position(
                     x: screenSize.width / 2 + item.worldPosition.x * canvasScale + canvasOffset.width,
                     y: screenSize.height / 2 + item.worldPosition.y * canvasScale + canvasOffset.height
                 )
-                .scaleEffect(canvasScale)
-                .zIndex(item.kind == .equation ? 5 : 10)
             }
 
-            // Эффекты
+            // Эффекты реакций
             ForEach(effects) { effect in
                 ReactionEffectView(effect: effect)
                     .position(
                         x: screenSize.width / 2 + effect.position.x * canvasScale + canvasOffset.width,
                         y: screenSize.height / 2 + effect.position.y * canvasScale + canvasOffset.height
                     )
-                    .scaleEffect(canvasScale)
                     .allowsHitTesting(false)
-                    .zIndex(100)
             }
         }
     }
 }
 
-// MARK: - Сетка на фоне
+// MARK: - Сетка
 struct GridCanvas: View {
     let scale: CGFloat
     let offset: CGSize
@@ -62,7 +58,6 @@ struct GridCanvas: View {
             let originY = size.height / 2 + offset.height
             let lineColor = Color(hex: "#1E293B").opacity(0.6)
 
-            // Вертикальные линии
             var x = originX.truncatingRemainder(dividingBy: spacing)
             if x < 0 { x += spacing }
             while x < size.width {
@@ -73,7 +68,6 @@ struct GridCanvas: View {
                 x += spacing
             }
 
-            // Горизонтальные линии
             var y = originY.truncatingRemainder(dividingBy: spacing)
             if y < 0 { y += spacing }
             while y < size.height {
@@ -87,14 +81,15 @@ struct GridCanvas: View {
     }
 }
 
-// MARK: - Перетаскиваемый предмет
+// MARK: - Перетаскиваемый элемент
 struct DraggableItemView: View {
     @Binding var item: WorldItem
     let scale: CGFloat
     let onDragEnd: () -> Void
     let onDelete: () -> Void
+    let onDragChange: (Bool) -> Void
 
-    @State private var dragStart: CGPoint?
+    @State private var dragStart: CGPoint? = nil
 
     var body: some View {
         Group {
@@ -104,11 +99,16 @@ struct DraggableItemView: View {
                 reagentView
             }
         }
+        .scaleEffect(scale) // масштабируем ДО позиционирования — иначе дрожит
+        .contentShape(Rectangle())
         .gesture(
-            DragGesture(minimumDistance: 3)
+            DragGesture(minimumDistance: 0, coordinateSpace: .global)
                 .onChanged { value in
-                    if dragStart == nil { dragStart = item.worldPosition }
-                    let start = dragStart ?? item.worldPosition
+                    if dragStart == nil {
+                        dragStart = item.worldPosition
+                        onDragChange(true)
+                    }
+                    guard let start = dragStart else { return }
                     item.worldPosition = CGPoint(
                         x: start.x + value.translation.width / scale,
                         y: start.y + value.translation.height / scale
@@ -116,12 +116,11 @@ struct DraggableItemView: View {
                 }
                 .onEnded { _ in
                     dragStart = nil
+                    onDragChange(false)
                     onDragEnd()
                 }
         )
-        .onTapGesture(count: 2) {
-            onDelete()
-        }
+        .onTapGesture(count: 2) { onDelete() }
     }
 
     var reagentView: some View {
@@ -169,7 +168,7 @@ struct DraggableItemView: View {
     }
 }
 
-// MARK: - Анимация эффекта реакции
+// MARK: - Эффект реакции
 struct ReactionEffectView: View {
     let effect: EffectAnimation
     @State private var animate = false
@@ -177,7 +176,6 @@ struct ReactionEffectView: View {
     var body: some View {
         ZStack {
             if effect.type == .explosion || effect.type == .flash {
-                // Вспышка / взрыв
                 Circle()
                     .fill(effect.color)
                     .frame(width: 60, height: 60)
@@ -197,7 +195,6 @@ struct ReactionEffectView: View {
                         .animation(.easeOut(duration: 1.0), value: animate)
                 }
             } else if effect.type == .gas {
-                // Пузырьки газа вверх
                 ForEach(0..<8, id: \.self) { i in
                     Circle()
                         .fill(effect.color.opacity(0.75))
@@ -213,7 +210,6 @@ struct ReactionEffectView: View {
                         effect.type == .precipitateBlue ||
                         effect.type == .precipitateBrown ||
                         effect.type == .precipitateYellow {
-                // Осадок падает вниз
                 ForEach(0..<10, id: \.self) { i in
                     Circle()
                         .fill(effect.color.opacity(0.8))
@@ -226,7 +222,6 @@ struct ReactionEffectView: View {
                         .animation(.easeIn(duration: 1.3).delay(Double(i) * 0.05), value: animate)
                 }
             } else if effect.type == .colorChange {
-                // Изменение цвета — пульсирующий круг
                 Circle()
                     .fill(effect.color.opacity(0.6))
                     .frame(width: 90, height: 90)
@@ -234,7 +229,6 @@ struct ReactionEffectView: View {
                     .opacity(animate ? 0 : 0.85)
                     .animation(.easeOut(duration: 1.2), value: animate)
             } else {
-                // Свечение / по умолчанию
                 Circle()
                     .fill(effect.color.opacity(0.5))
                     .frame(width: 80, height: 80)
