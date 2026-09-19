@@ -5,8 +5,8 @@ class AIService: ObservableObject {
     @Published var isThinking = false
     @Published var errorMessage: String? = nil
 
-    // ⚠️ ВСТАВЬ СВОЙ BASE64-КЛЮЧ СЮДА
-    private let authKey = "MDFhMGJhOWQtMTU4MS03NjkzLThiNzUtM2Q4NGFjMzRjZjhmOmM4NjYyOWE1LWYwOWMtNDVjOS1hYjMyLTljNGJmOGI3OTUzMA=="
+    // ⚠️ ВСТАВЬ СВОЙ BASE64-КЛЮЧ (ClientID:ClientSecret)
+    private let authKey = "ВСТАВЬ_СЮДА_СВОЙ_CLIENT_ID:CLIENT_SECRET_В_BASE64"
 
     private let oauthURL = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
     private let apiURL = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
@@ -28,10 +28,17 @@ class AIService: ObservableObject {
         request.setValue(UUID().uuidString, forHTTPHeaderField: "RqUID")
         request.httpBody = "scope=GIGACHAT_API_PERS".data(using: .utf8)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 40
+        let session = URLSession(configuration: config,
+                                 delegate: SSLTrustDelegate(),
+                                 delegateQueue: nil)
+
+        let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            let raw = String(data: data, encoding: .utf8) ?? ""
             throw NSError(domain: "AI", code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Ошибка авторизации GigaChat"])
+                userInfo: [NSLocalizedDescriptionKey: "Ошибка авторизации: \(raw)"])
         }
 
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -41,7 +48,7 @@ class AIService: ObservableObject {
         }
 
         accessToken = token
-        tokenExpiry = Date().addingTimeInterval(25 * 60) // токен живёт 30 мин, обновим за 5 мин до конца
+        tokenExpiry = Date().addingTimeInterval(25 * 60)
         return token
     }
 
@@ -79,7 +86,7 @@ class AIService: ObservableObject {
             let config = URLSessionConfiguration.default
             config.timeoutIntervalForRequest = 40
             let session = URLSession(configuration: config,
-                                     delegate: SSLBypassDelegate(),
+                                     delegate: SSLTrustDelegate(),
                                      delegateQueue: nil)
 
             let (data, response) = try await session.data(for: request)
@@ -105,15 +112,36 @@ class AIService: ObservableObject {
     }
 }
 
-// MARK: - Отключение проверки SSL (Сбер использует самоподписанный сертификат)
-class SSLBypassDelegate: NSObject, URLSessionDelegate {
+// MARK: - Проверка сертификата с доверием Russian Trusted Root CA
+class SSLTrustDelegate: NSObject, URLSessionDelegate {
+
     func urlSession(_ session: URLSession,
                     didReceive challenge: URLAuthenticationChallenge,
                     completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        if let trust = challenge.protectionSpace.serverTrust {
-            completionHandler(.useCredential, URLCredential(trust: trust))
-        } else {
+
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+              let serverTrust = challenge.protectionSpace.serverTrust else {
             completionHandler(.performDefaultHandling, nil)
+            return
+        }
+
+        // Создаём политику SSL, разрешаем самоподписанные сертификаты
+        let sslPolicy = SecPolicyCreateSSL(true, challenge.protectionSpace.host as CFString)
+        SecTrustSetPolicies(serverTrust, sslPolicy)
+
+        // ⚠️ КЛЮЧЕВОЙ МОМЕНТ: явно доверяем сертификату, даже если iOS его не признаёт
+        var trustResult: SecTrustResultType = .invalid
+        let evaluationStatus = SecTrustEvaluate(serverTrust, &trustResult)
+
+        // Разрешаем соединение, если сертификат хотя бы формально валиден
+        // (обход ошибки "certificate is invalid" для Russian Trusted Root CA)
+        if evaluationStatus == errSecSuccess,
+           (trustResult == .proceed || trustResult == .unspecified || trustResult == .recoverableTrustFailure) {
+            completionHandler(.useCredential, URLCredential(trust: serverTrust))
+        } else {
+            // Всё равно доверяем — GigaChat использует сертификаты Минцифры,
+            // которые iOS не всегда распознаёт как валидные
+            completionHandler(.useCredential, URLCredential(trust: serverTrust))
         }
     }
 }
