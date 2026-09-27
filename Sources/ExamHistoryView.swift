@@ -7,11 +7,14 @@ struct ExamHistoryView: View {
 
     var body: some View {
         NavigationView {
-            Group {
-                if history.isEmpty {
-                    emptyState
-                } else {
-                    listView
+            ZStack {
+                Color(hex: "#0B1020").ignoresSafeArea()
+                Group {
+                    if history.isEmpty {
+                        emptyState
+                    } else {
+                        listView
+                    }
                 }
             }
             .navigationTitle("История экзаменов")
@@ -19,6 +22,7 @@ struct ExamHistoryView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Закрыть") { dismiss() }
+                        .foregroundColor(Color(hex: "#60A5FA"))
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if !history.isEmpty {
@@ -26,6 +30,7 @@ struct ExamHistoryView: View {
                             showClearConfirm = true
                         } label: {
                             Image(systemName: "trash")
+                                .foregroundColor(Color(hex: "#EF4444"))
                         }
                     }
                 }
@@ -50,12 +55,14 @@ struct ExamHistoryView: View {
         VStack(spacing: 12) {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color(hex: "#475569"))
             Text("Пока нет результатов")
-                .font(.headline)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
             Text("Пройди пробный экзамен —\nздесь появится статистика.")
                 .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color(hex: "#94A3B8"))
+                .font(.system(size: 14))
         }
         .padding()
     }
@@ -63,17 +70,23 @@ struct ExamHistoryView: View {
     // MARK: - Список
 
     private var listView: some View {
-        List {
-            Section {
+        ScrollView {
+            VStack(spacing: 16) {
                 summaryBlock
-            }
-            Section("Последние попытки") {
-                ForEach(history) { item in
-                    row(for: item)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Последние попытки")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 4)
+
+                    ForEach(history) { item in
+                        row(for: item)
+                    }
                 }
             }
+            .padding(16)
         }
-        .listStyle(.insetGrouped)
     }
 
     private var summaryBlock: some View {
@@ -82,19 +95,24 @@ struct ExamHistoryView: View {
         let best = history.map { $0.score }.max() ?? 0
         let lastGrade = history.first?.grade ?? 0
 
-        return HStack(spacing: 12) {
+        return HStack(spacing: 8) {
             statBlock(title: "Попыток", value: "\(history.count)")
             statBlock(title: "Средний", value: String(format: "%.1f", avg))
             statBlock(title: "Лучший", value: "\(best)")
             statBlock(title: "Оценка", value: "\(lastGrade)")
         }
-        .padding(.vertical, 4)
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color(hex: "#1E293B")))
     }
 
     private func statBlock(title: String, value: String) -> some View {
         VStack(spacing: 4) {
-            Text(value).font(.title3).bold()
-            Text(title).font(.caption).foregroundColor(.secondary)
+            Text(value)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+            Text(title)
+                .font(.system(size: 11))
+                .foregroundColor(Color(hex: "#94A3B8"))
         }
         .frame(maxWidth: .infinity)
     }
@@ -104,19 +122,21 @@ struct ExamHistoryView: View {
             gradeBadge(item.grade)
             VStack(alignment: .leading, spacing: 4) {
                 Text(dateString(item.date))
-                    .font(.subheadline).bold()
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white)
                 Text("Баллы: \(item.score) • Верно: \(item.correctCount)/\(item.totalTasks)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(hex: "#94A3B8"))
             }
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color(hex: "#1E293B")))
     }
 
     private func gradeBadge(_ grade: Int) -> some View {
         Text("\(grade)")
-            .font(.headline)
+            .font(.system(size: 16, weight: .bold))
             .foregroundColor(.white)
             .frame(width: 36, height: 36)
             .background(gradeColor(grade))
@@ -125,10 +145,10 @@ struct ExamHistoryView: View {
 
     private func gradeColor(_ grade: Int) -> Color {
         switch grade {
-        case 5: return .green
-        case 4: return .blue
-        case 3: return .orange
-        default: return .red
+        case 5: return Color(hex: "#22C55E")
+        case 4: return Color(hex: "#3B82F6")
+        case 3: return Color(hex: "#F59E0B")
+        default: return Color(hex: "#EF4444")
         }
     }
 
