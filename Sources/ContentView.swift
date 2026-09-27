@@ -77,6 +77,7 @@ struct LabView: View {
     @State private var activeConditions: Set<ConditionType> = []
     @State private var showConditionsPanel = false
     @State private var showPeriodicTable = false
+    @State private var showTestTubeLab = false
 
     var body: some View {
         GeometryReader { geo in
@@ -138,6 +139,9 @@ struct LabView: View {
                 onSelect: { r in addReagent(r) },
                 onClose: { showPeriodicTable = false }
             )
+        }
+        .fullScreenCover(isPresented: $showTestTubeLab) {
+            TestTubeLabView()
         }
         .onChange(of: incomingReagents) { reagents in
             guard !reagents.isEmpty else { return }
@@ -275,21 +279,19 @@ struct LabView: View {
             .padding(.horizontal, 12)
             .padding(.top, isLandscape ? 4 : 10)
 
-            if selectedGroup == .elements {
+            HStack(spacing: 8) {
                 Button {
                     showPeriodicTable = true
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         Image(systemName: "rectangle.grid.3x2.fill")
-                            .font(.system(size: 14))
-                        Text("Открыть таблицу Менделеева")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 13))
+                        Text("Таблица")
+                            .font(.system(size: 13, weight: .semibold))
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
                     }
                     .foregroundColor(.white)
-                    .padding(.horizontal, 14)
+                    .padding(.horizontal, 12)
                     .padding(.vertical, isLandscape ? 8 : 11)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
@@ -302,8 +304,33 @@ struct LabView: View {
                             )
                     )
                 }
-                .padding(.horizontal, 12)
+
+                Button {
+                    showTestTubeLab = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "testtube.2")
+                            .font(.system(size: 13))
+                        Text("Пробирка")
+                            .font(.system(size: 13, weight: .semibold))
+                        Spacer()
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, isLandscape ? 8 : 11)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "#8B5CF6"), Color(hex: "#6366F1")],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
+                }
             }
+            .padding(.horizontal, 12)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: isLandscape ? 8 : 12) {
@@ -836,6 +863,7 @@ struct IntroOverlay: View {
                         row(icon: "drop.fill", text: "От продукта ещё 10 сек идёт эффект (вода, газ, осадок)")
                         row(icon: "slider.horizontal.3", text: "Кнопка «Условия» — справа снизу (нагрев, кат., свет)")
                         row(icon: "rectangle.grid.3x2.fill", text: "Таблица Менделеева — кнопка внизу")
+                        row(icon: "testtube.2", text: "Пробирка — отдельный режим со спиртовкой")
                         row(icon: "hand.tap.fill", text: "Двойной тап по элементу — удалить")
                     }.padding(16).background(Color(hex: "#1E293B")).cornerRadius(16).padding(.horizontal, 8)
                     Button(action: onClose) {
