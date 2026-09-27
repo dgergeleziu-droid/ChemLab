@@ -1199,9 +1199,3 @@ enum ChemistryData {
             equation: "K₂Cr₂O₇ + 14HCl → 2KCl + 2CrCl₃ + 3Cl₂↑ + 7H₂O", effect: .gas, effectColorHex: "#4ADE80",
             warning: "⚠️ Выделяется токсичный хлор!"),
     ]
-
-    static func findReaction(_ a: String, _ b: String) -> ChemicalReaction? {
-        let pair: Set<String> = [a, b]
-        return reactions.first { $0.reagents == pair }
-    }
-}
