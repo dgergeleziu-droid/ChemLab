@@ -35,14 +35,11 @@ struct ContentView: View {
 
 enum AppMode { case lab, exam, revision, editor }
 
-// MARK: - КЭШ РЕАКЦИЙ (ускоряет поиск в 10-100 раз при многих элементах)
-
+// MARK: - КЭШ РЕАКЦИЙ (ускоряет поиск на порядок)
 final class ReactionCache {
     static let shared = ReactionCache()
-
     private var hits: [String: ChemicalReaction] = [:]
     private var misses: Set<String> = []
-
     private init() {}
 
     func find(_ a: String, _ b: String) -> ChemicalReaction? {
@@ -340,7 +337,7 @@ struct LabView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { withAnimation { toastMessage = nil } }
     }
 
-    // ⚡️ Оптимизировано: без sqrt, с кэшем реакций, с защитой от повторных срабатываний
+    // ⚡️ Оптимизировано: без sqrt, с кэшем, с защитой от повторных срабатываний
     func checkReactions() {
         let th: CGFloat = 130
         let th2 = th * th
@@ -359,7 +356,6 @@ struct LabView: View {
 
                 let dx = ax - b.worldPosition.x
                 let dy = ay - b.worldPosition.y
-                // Ранний выход без sqrt — самая горячая часть цикла
                 guard dx * dx + dy * dy < th2 else { continue }
 
                 let key = a.symbol < b.symbol ? "\(a.symbol)+\(b.symbol)" : "\(b.symbol)+\(a.symbol)"
@@ -818,126 +814,6 @@ struct ExamView: View {
                 }.padding(.horizontal, 20).padding(.bottom, 40)
             }.padding(.top, 20)
         }
-    }
-}
-
-// MARK: - 🎨 КРАСИВЫЙ ЧИП-СФЕРА
-
-struct ReagentChip: View {
-    let reagent: Reagent
-    var size: CGFloat = 56
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                ZStack {
-                    // 1. Мягкое свечение сзади
-                    Circle()
-                        .fill(Color(hex: reagent.colorHex))
-                        .frame(width: size * 1.05, height: size * 1.05)
-                        .blur(radius: 10)
-                        .opacity(0.55)
-
-                    // 2. Основная сфера (глянцевый градиент)
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                gradient: Gradient(stops: [
-                                    .init(color: Color.white.opacity(0.60), location: 0.00),
-                                    .init(color: Color.white.opacity(0.18), location: 0.18),
-                                    .init(color: Color(hex: reagent.colorHex).opacity(0.98), location: 0.55),
-                                    .init(color: Color(hex: reagent.colorHex).opacity(0.65), location: 1.00)
-                                ]),
-                                center: UnitPoint(x: 0.32, y: 0.28),
-                                startRadius: 1,
-                                endRadius: size * 0.72
-                            )
-                        )
-                        .frame(width: size, height: size)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [.white.opacity(0.75), .white.opacity(0.05)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1.2
-                                )
-                        )
-                        .shadow(color: Color(hex: reagent.colorHex).opacity(0.55),
-                                radius: 6, x: 0, y: 3)
-
-                    // 3. Блик сверху
-                    Circle()
-                        .fill(Color.white.opacity(0.55))
-                        .frame(width: size * 0.20, height: size * 0.20)
-                        .blur(radius: 2.5)
-                        .offset(x: -size * 0.18, y: -size * 0.22)
-
-                    // 4. Символ
-                    Text(reagent.symbol)
-                        .font(.system(size: fontSizeForSymbol(), weight: .heavy, design: .rounded))
-                        .foregroundColor(.white)
-                        .shadow(color: .black.opacity(0.45), radius: 1.5, x: 0, y: 1)
-                        .minimumScaleFactor(0.5)
-                        .lineLimit(1)
-                        .padding(.horizontal, 4)
-
-                    // 5. Кольцо-индикатор группы
-                    Circle()
-                        .strokeBorder(groupRingColor, style: StrokeStyle(lineWidth: 1.3, dash: groupRingDash))
-                        .frame(width: size + 5, height: size + 5)
-                }
-
-                if size >= 50 {
-                    Text(reagent.name)
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
-                        .foregroundColor(Color(hex: "#CBD5E1"))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .frame(width: 72)
-                }
-            }
-            .frame(width: size + 20)
-        }
-        .buttonStyle(ChipPressStyle())
-    }
-
-    // Кольцо вокруг сферы: у элементов сплошное, у соединений пунктир, у органики точки
-    private var groupRingColor: Color {
-        switch reagent.group {
-        case .elements:  return Color.white.opacity(0.45)
-        case .compounds: return Color(hex: "#60A5FA").opacity(0.75)
-        case .organic:   return Color(hex: "#A78BFA").opacity(0.85)
-        }
-    }
-
-    private var groupRingDash: [CGFloat] {
-        switch reagent.group {
-        case .elements:  return []
-        case .compounds: return [4, 3]
-        case .organic:   return [1.5, 2.5]
-        }
-    }
-
-    func fontSizeForSymbol() -> CGFloat {
-        let base: CGFloat = size >= 50 ? 19 : 15
-        switch reagent.symbol.count {
-        case 5...:  return base - 7
-        case 4:     return base - 5
-        case 3:     return base - 3
-        default:    return base
-        }
-    }
-}
-
-struct ChipPressStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.88 : 1.0)
-            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }
 
