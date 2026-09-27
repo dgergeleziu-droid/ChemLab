@@ -25,7 +25,7 @@ struct SavedExamResult: Identifiable, Codable, Equatable {
     }
 }
 
-// MARK: - Хранилище
+// MARK: - Хранилище истории экзаменов
 
 final class ExamResultStorage {
     static let shared = ExamResultStorage()
@@ -44,7 +44,6 @@ final class ExamResultStorage {
         persist(history)
     }
 
-    /// Удобный хелпер — сохранить из ExamResult
     func save(from result: ExamResult) {
         let saved = SavedExamResult(
             totalTasks: result.totalTasks,
