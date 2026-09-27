@@ -577,6 +577,7 @@ struct ExamView: View {
     @State private var result: ExamResult? = nil
     @State private var equationInput: String = ""
     @State private var showExplanation = false
+    @State private var showHistory = false
 
     var body: some View {
         ZStack {
@@ -587,6 +588,27 @@ struct ExamView: View {
                 else if showResult, let r = result { resultView(result: r) }
                 else { startScreen }
             }
+        }
+        .overlay(alignment: .topLeading) {
+            Button {
+                showHistory = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("История")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(Color(hex: "#1E293B"))
+                .clipShape(Capsule())
+            }
+            .padding(.leading, 16)
+            .padding(.top, 8)
+        }
+        .sheet(isPresented: $showHistory) {
+            ExamHistoryView()
         }
     }
 
@@ -710,9 +732,13 @@ struct ExamView: View {
         case 16...25: grade = 4
         default: grade = 5
         }
-        result = ExamResult(totalTasks: variant.tasks.count, correctCount: correct,
+        let res = ExamResult(totalTasks: variant.tasks.count, correctCount: correct,
                              score: score, grade: grade, details: details)
+        result = res
         showResult = true
+
+        // ⬇️ Сохраняем результат в историю
+        ExamResultStorage.shared.save(from: res)
     }
 
     func resultView(result res: ExamResult) -> some View {
