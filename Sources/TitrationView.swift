@@ -5,7 +5,9 @@ struct TitrationView: View {
 
     @State private var ml: Double = 0
     @State private var dripping = false
-    @State private var timer = Timer.publish(every: 0.08, on: .main, in: .common).autoconnect()
+
+    // 🚀 PhysicsTicker вместо Timer.publish
+    @StateObject private var ticker = PhysicsTicker()
 
     private let equivalence: Double = 25.0
 
@@ -33,7 +35,9 @@ struct TitrationView: View {
             }
         }
         .navigationViewStyle(.stack)
-        .onReceive(timer) { _ in tick() }
+        .onAppear { ticker.start() }
+        .onDisappear { ticker.stop() }
+        .onReceive(ticker.$tick) { _ in tick() }
     }
 
     private var burette: some View {
@@ -129,9 +133,10 @@ struct TitrationView: View {
         return "Перетитровали — раствор стал щелочным"
     }
 
+    // Ticker = 0.1 сек, значит ml растёт по 0.25 → 2.5 мл/сек
     private func tick() {
         guard dripping else { return }
-        ml = min(50, ml + 0.3)
+        ml = min(50, ml + 0.25)
         if abs(ml - equivalence) < 0.3 && ml > 0 {
             SoundManager.shared.success()
             AchievementsStorage.shared.add("first_reaction")
