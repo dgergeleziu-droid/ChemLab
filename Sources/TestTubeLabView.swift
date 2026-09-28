@@ -20,6 +20,10 @@ enum AggregateState: String, CaseIterable {
 
 extension ChemistryData {
     static func aggregateState(of symbol: String) -> AggregateState {
+        if let cached = ChemistryDataCache.shared.stateOf[symbol] {
+            return cached
+        }
+        // Fallback (если символ не в кэше — напр. продукт, не реагент)
         let gases: Set<String> = [
             "H","O","N","F","Cl","He","Ne","Ar","Kr","Xe","Rn",
             "CO","CO2","SO2","SO3","NO","NO2","N2O5","NH3","H2S",
@@ -57,9 +61,9 @@ final class PhysicsTicker: ObservableObject {
     @Published var tick: Int = 0
     private var timer: Timer?
 
-    func start() {
+    func start(interval: TimeInterval = 0.12) {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.tick &+= 1
         }
     }
@@ -68,6 +72,8 @@ final class PhysicsTicker: ObservableObject {
         timer?.invalidate()
         timer = nil
     }
+
+    deinit { stop() }
 }
 
 // ============================================================
@@ -109,7 +115,7 @@ struct TiltedLiquidShape: Shape {
 }
 
 // ============================================================
-// MARK: - Стеклянное тело пробирки
+// MARK: - Тело пробирки
 // ============================================================
 
 struct GlassTubeBody: View {
@@ -124,12 +130,12 @@ struct GlassTubeBody: View {
 
     @State private var bubblePhase: CGFloat = 0
     @State private var steamPhase: CGFloat = 0
-    @State private var surfaceShimmer: CGFloat = 0
 
     private var cornerRadius: CGFloat { tubeW / 2 }
 
     var body: some View {
         ZStack {
+            // 1. Подложка стекла
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(
                     LinearGradient(
@@ -142,6 +148,7 @@ struct GlassTubeBody: View {
                     )
                 )
 
+            // 2. Жидкость
             if let liquid = liquid {
                 ZStack {
                     TiltedLiquidShape(fillLevel: liquid.amount, tubeAngle: tubeAngle)
@@ -159,15 +166,10 @@ struct GlassTubeBody: View {
                     TiltedLiquidShape(fillLevel: liquid.amount, tubeAngle: tubeAngle)
                         .stroke(Color.white.opacity(0.35), lineWidth: 1)
                         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-
-                    TiltedLiquidShape(fillLevel: liquid.amount + 0.06, tubeAngle: tubeAngle)
-                        .fill(Color.white.opacity(0.10))
-                        .blendMode(.plusLighter)
-                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                        .opacity(0.5 + Double(sin(surfaceShimmer)) * 0.15)
                 }
             }
 
+            // 3. Твёрдые
             if !solids.isEmpty {
                 VStack {
                     Spacer()
@@ -198,6 +200,7 @@ struct GlassTubeBody: View {
                 }
             }
 
+            // 4. Пузырьки
             if gasCount > 0 {
                 ZStack {
                     ForEach(0..<min(gasCount * 4, 16), id: \.self) { i in
@@ -208,8 +211,10 @@ struct GlassTubeBody: View {
                 .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             }
 
+            // 5. Блики стекла (упрощено: без blur на каждом слое)
             GlassHighlights(tubeW: tubeW, tubeH: tubeH)
 
+            // 6. Свечение дна
             if temperature > 35 {
                 let t = min((temperature - 35) / 65, 1.0)
                 VStack {
@@ -231,6 +236,7 @@ struct GlassTubeBody: View {
                 .allowsHitTesting(false)
             }
 
+            // 7. Пар
             if temperature > 55 {
                 let opacity = min((temperature - 55) / 45, 1.0) * 0.6
                 VStack {
@@ -251,6 +257,7 @@ struct GlassTubeBody: View {
                 .allowsHitTesting(false)
             }
 
+            // 8. Окантовка
             RoundedRectangle(cornerRadius: cornerRadius)
                 .strokeBorder(
                     LinearGradient(
@@ -268,6 +275,7 @@ struct GlassTubeBody: View {
                 .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 .padding(3)
 
+            // 9. Горлышко
             Ellipse()
                 .strokeBorder(
                     LinearGradient(
@@ -286,28 +294,19 @@ struct GlassTubeBody: View {
                 .blur(radius: 2)
         }
         .frame(width: tubeW, height: tubeH)
-        .overlay(
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .stroke(Color.white.opacity(0.05), lineWidth: 6)
-                .blur(radius: 3)
-                .allowsHitTesting(false)
-        )
         .onAppear {
-            withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
+            withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) {
                 bubblePhase = 2 * .pi
             }
             withAnimation(.linear(duration: 3.2).repeatForever(autoreverses: false)) {
                 steamPhase = 2 * .pi
-            }
-            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
-                surfaceShimmer = .pi
             }
         }
     }
 }
 
 // ============================================================
-// MARK: - Блики стекла
+// MARK: - Блики стекла (упрощено: без blur)
 // ============================================================
 
 struct GlassHighlights: View {
@@ -316,6 +315,7 @@ struct GlassHighlights: View {
 
     var body: some View {
         ZStack {
+            // Главная полоса блика
             Capsule()
                 .fill(
                     LinearGradient(
@@ -329,35 +329,19 @@ struct GlassHighlights: View {
                     )
                 )
                 .frame(width: tubeW * 0.13, height: tubeH * 0.72)
-                .blur(radius: 2)
                 .offset(x: -tubeW * 0.28, y: -tubeH * 0.02)
 
+            // Тонкая справа
             Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.0),
-                            Color.white.opacity(0.30),
-                            Color.white.opacity(0.0)
-                        ],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
+                .fill(Color.white.opacity(0.30))
                 .frame(width: tubeW * 0.05, height: tubeH * 0.50)
-                .blur(radius: 1.5)
                 .offset(x: tubeW * 0.30, y: tubeH * 0.06)
 
+            // Точка сверху
             Ellipse()
                 .fill(Color.white.opacity(0.45))
                 .frame(width: tubeW * 0.20, height: 5)
-                .blur(radius: 2)
                 .offset(x: -tubeW * 0.15, y: -tubeH * 0.36)
-
-            Ellipse()
-                .fill(Color.white.opacity(0.15))
-                .frame(width: tubeW * 0.55, height: 8)
-                .blur(radius: 4)
-                .offset(y: -tubeH/2 + 12)
         }
         .allowsHitTesting(false)
     }
@@ -393,10 +377,7 @@ struct BubbleView: View {
                     startRadius: 0.5, endRadius: size
                 )
             )
-            .overlay(
-                Circle()
-                    .stroke(Color.white.opacity(0.25), lineWidth: 0.6)
-            )
+            .overlay(Circle().stroke(Color.white.opacity(0.25), lineWidth: 0.6))
             .frame(width: size, height: size)
             .offset(x: xBase + wobble, y: y - tubeH/2)
             .opacity(1.0 - Double(progress) * 0.6)
@@ -422,21 +403,6 @@ struct AlcoholLampView: View {
             VStack(spacing: 0) {
                 ZStack {
                     if lit {
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    colors: [
-                                        Color(hex: "#F97316").opacity(0.30),
-                                        Color.clear
-                                    ],
-                                    center: .center,
-                                    startRadius: 0, endRadius: 55
-                                )
-                            )
-                            .frame(width: 110, height: 110)
-                            .offset(y: -6)
-                            .blendMode(.plusLighter)
-
                         FlameShape()
                             .fill(
                                 LinearGradient(
@@ -465,7 +431,6 @@ struct AlcoholLampView: View {
                             )
                             .frame(width: 18, height: 36)
                             .scaleEffect(y: 0.94 + innerFlicker * 0.10)
-                            .offset(y: 0)
 
                         FlameShape()
                             .fill(Color(hex: "#EFF6FF"))
@@ -550,7 +515,6 @@ struct AlcoholLampView: View {
                     Capsule()
                         .fill(Color.white.opacity(0.35))
                         .frame(width: 4, height: 32)
-                        .blur(radius: 1.5)
                         .offset(x: -lampW * 0.28, y: 4)
                 }
             }
@@ -644,12 +608,15 @@ struct TestTubeLabView: View {
 
     @State private var reactionResult: ChemicalReaction? = nil
     @State private var showReactionCard = false
+    @State private var reactionFired = false
 
     @State private var toastMessage: String? = nil
     @State private var flashOpacity: Double = 0
     @State private var shakeOffset: CGFloat = 0
     @State private var spillCooldown: Double = 0
+
     @State private var screenSize: CGSize = .zero
+    @State private var cachedFlameTip: CGPoint = .zero
 
     private let tubeW: CGFloat = 96
     private let tubeH: CGFloat = 240
@@ -679,7 +646,12 @@ struct TestTubeLabView: View {
                         y: geo.size.height * 0.18
                     )
                 }
-                ticker.start()
+                // 🔒 Кэш позиции пламени: считаем один раз
+                cachedFlameTip = CGPoint(
+                    x: geo.size.width / 2,
+                    y: geo.size.height - 155 - 132
+                )
+                ticker.start(interval: 0.12)
             }
             .onDisappear {
                 ticker.stop()
@@ -748,11 +720,6 @@ struct TestTubeLabView: View {
         return CGPoint(x: lamp.x, y: lamp.y - 132)
     }
 
-    private func flameTipPositionFromScreen() -> CGPoint {
-        let lamp = CGPoint(x: screenSize.width / 2, y: screenSize.height - 155)
-        return CGPoint(x: lamp.x, y: lamp.y - 132)
-    }
-
     private func lampLayer(geo: GeometryProxy) -> some View {
         let pos = lampPosition(geo: geo)
         return AlcoholLampView(
@@ -773,12 +740,12 @@ struct TestTubeLabView: View {
         let solids = contents.filter { $0.state == .solid }
         let gasCount = contents.filter { $0.state == .gas }.count
 
+        // Сравнение по квадратам расстояния — без sqrt
         let bottom = tubeBottomWorld()
         let flame = flameTipPosition(geo: geo)
         let dx = bottom.x - flame.x
         let dy = bottom.y - flame.y
-        let dist = sqrt(dx*dx + dy*dy)
-        let litNearby = lampLit && dist < 90
+        let litNearby = lampLit && (dx*dx + dy*dy) < 8100  // 90²
 
         return GlassTubeBody(
             tubeW: tubeW,
@@ -831,7 +798,6 @@ struct TestTubeLabView: View {
                     Circle()
                         .stroke(Color(hex: "#F97316").opacity(0.55), lineWidth: 2)
                         .frame(width: 80, height: 80)
-                        .blur(radius: 3)
                     Circle()
                         .stroke(Color(hex: "#FBBF24").opacity(0.85), lineWidth: 1)
                         .frame(width: 52, height: 52)
@@ -891,6 +857,7 @@ struct TestTubeLabView: View {
                         lampLit = false
                         temperature = 20
                         tubeAngle = .degrees(0)
+                        reactionFired = false
                     }
                     showToast("Опустошено")
                 } label: {
@@ -956,7 +923,6 @@ struct TestTubeLabView: View {
                             )
                         )
                         .frame(width: g.size.width * CGFloat(temperature / 100))
-                        .animation(.easeOut(duration: 0.2), value: temperature)
                 }
             }
             .frame(height: 8)
@@ -1030,12 +996,12 @@ struct TestTubeLabView: View {
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 10) {
+                        // 🚀 Берём из кэша
                         ForEach(filteredReagents, id: \.symbol) { r in
                             InlineChip(reagent: r, size: 52)
                                 .gesture(reagentDragGesture(for: r))
                                 .opacity(draggingReagent?.symbol == r.symbol ? 0.35 : 1)
                                 .scaleEffect(draggingReagent?.symbol == r.symbol ? 0.9 : 1)
-                                .animation(.spring(response: 0.25), value: draggingReagent?.symbol)
                         }
                     }
                     .padding(.horizontal, 14)
@@ -1054,9 +1020,7 @@ struct TestTubeLabView: View {
     }
 
     private var filteredReagents: [Reagent] {
-        ChemistryData.reagents.filter {
-            ChemistryData.aggregateState(of: $0.symbol) == selectedState
-        }
+        ChemistryDataCache.shared.byState[selectedState] ?? []
     }
 
     private func reagentDragGesture(for r: Reagent) -> some Gesture {
@@ -1109,15 +1073,19 @@ struct TestTubeLabView: View {
         .allowsHitTesting(false)
     }
 
+    // ============================================================
+    // MARK: - Физика
+    // ============================================================
+
     private func physicsTick() {
         guard screenSize != .zero else { return }
 
         let bottom = tubeBottomWorld()
-        let flame = flameTipPositionFromScreen()
+        let flame = cachedFlameTip
         let dx = bottom.x - flame.x
         let dy = bottom.y - flame.y
-        let dist = sqrt(dx*dx + dy*dy)
-        let heating = lampLit && dist < 75
+        let distSq = dx*dx + dy*dy
+        let heating = lampLit && distSq < 5625   // 75²
         isHeatingNow = heating
 
         if heating {
@@ -1140,9 +1108,9 @@ struct TestTubeLabView: View {
                 }
             }
         }
-        spillCooldown = max(0, spillCooldown - 0.1)
+        spillCooldown = max(0, spillCooldown - 0.12)
 
-        if temperature > 55 {
+        if temperature > 55 && !reactionFired {
             tryReaction(requireHeat: true)
         }
     }
@@ -1156,11 +1124,13 @@ struct TestTubeLabView: View {
     }
 
     private func dropReagent(_ r: Reagent, at point: CGPoint) {
+        guard !showReactionCard else { return }
+
         let dx = point.x - tubeTopAnchor.x
         let dy = point.y - tubeTopAnchor.y
-        let dist = sqrt(dx*dx + dy*dy)
+        let distSq = dx*dx + dy*dy
 
-        if dist < 75 {
+        if distSq < 5625 {   // 75²
             addToTube(r)
         } else {
             showToast("Промахнулся — тащи точнее к устью пробирки")
@@ -1168,6 +1138,7 @@ struct TestTubeLabView: View {
     }
 
     private func addToTube(_ r: Reagent) {
+        guard !showReactionCard else { return }
         guard contents.count < 5 else {
             showToast("Пробирка полная")
             return
@@ -1199,6 +1170,8 @@ struct TestTubeLabView: View {
     }
 
     private func tryReaction(requireHeat: Bool?) {
+        guard !reactionFired else { return }
+
         let symbols = contents.map { $0.symbol }
         guard symbols.count >= 2 else { return }
 
@@ -1212,6 +1185,7 @@ struct TestTubeLabView: View {
                         }
                         return
                     }
+                    reactionFired = true
                     fireReaction(r)
                     return
                 }
@@ -1328,6 +1302,7 @@ struct TestTubeLabView: View {
                 contents.removeAll()
                 reactionResult = nil
                 temperature = 20
+                reactionFired = false
             }
         }
     }
