@@ -11,7 +11,6 @@ struct Achievement: Identifiable {
 final class AchievementsStorage: ObservableObject {
     static let shared = AchievementsStorage()
 
-    // Все ачивки
     let all: [Achievement] = [
         .init(id: "first_reaction", icon: "sparkles", title: "Первая реакция", description: "Запустить первую реакцию", goal: 1),
         .init(id: "explosionist",   icon: "flame.fill", title: "Взрывник", description: "10 реакций со взрывом", goal: 10),
@@ -33,6 +32,10 @@ final class AchievementsStorage: ObservableObject {
     private let progressKey = "chemlab.ach.progress.v1"
     private let unlockedKey = "chemlab.ach.unlocked.v1"
 
+    // 🚀 Debounce: пишем в UserDefaults не чаще раза в 0.8 секунды
+    private var saveTimer: Timer?
+    private let saveDelay: TimeInterval = 0.8
+
     private init() { load() }
 
     func add(_ id: String, by amount: Int = 1) {
@@ -43,7 +46,7 @@ final class AchievementsStorage: ObservableObject {
                 unlocked.insert(id)
             }
         }
-        save()
+        scheduleSave()
     }
 
     func set(_ id: String, to value: Int) {
@@ -51,11 +54,20 @@ final class AchievementsStorage: ObservableObject {
         if let a = all.first(where: { $0.id == id }), value >= a.goal {
             unlocked.insert(id)
         }
-        save()
+        scheduleSave()
     }
 
     func progressValue(_ id: String) -> Int { progress[id] ?? 0 }
     func isUnlocked(_ id: String) -> Bool { unlocked.contains(id) }
+
+    // MARK: - Persistence с debounce
+
+    private func scheduleSave() {
+        saveTimer?.invalidate()
+        saveTimer = Timer.scheduledTimer(withTimeInterval: saveDelay, repeats: false) { [weak self] _ in
+            self?.save()
+        }
+    }
 
     private func save() {
         UserDefaults.standard.set(progress, forKey: progressKey)
