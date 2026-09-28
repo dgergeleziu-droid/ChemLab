@@ -7,7 +7,7 @@ struct TitrationView: View {
     @State private var dripping = false
     @State private var timer = Timer.publish(every: 0.08, on: .main, in: .common).autoconnect()
 
-    private let equivalence: Double = 25.0   // мл до эквивалента
+    private let equivalence: Double = 25.0
 
     var body: some View {
         NavigationView {
@@ -45,14 +45,12 @@ struct TitrationView: View {
                     RoundedRectangle(cornerRadius: 4)
                         .strokeBorder(Color.white.opacity(0.55), lineWidth: 1.5)
                 )
-            // Титр
             Rectangle()
                 .fill(LinearGradient(
                     colors: [Color(hex: "#FBBF24"), Color(hex: "#F59E0B")],
                     startPoint: .top, endPoint: .bottom))
                 .frame(width: 26, height: max(2, 220 - ml * 7))
                 .padding(.bottom, 2)
-            // Кран
             if dripping {
                 Capsule()
                     .fill(Color(hex: "#FBBF24"))
@@ -75,7 +73,7 @@ struct TitrationView: View {
             Triangle()
                 .fill(Color.white.opacity(0.06))
                 .frame(width: 130, height: 100)
-                .overlay(Triangle().strokeBorder(Color.white.opacity(0.5), lineWidth: 1.5))
+                .overlay(Triangle().stroke(Color.white.opacity(0.5), lineWidth: 1.5))
 
             Triangle()
                 .fill(currentFlaskColor.opacity(0.7))
@@ -86,9 +84,9 @@ struct TitrationView: View {
 
     private var currentFlaskColor: Color {
         let ratio = ml / equivalence
-        if ratio < 0.95 { return Color(hex: "#EF4444") }         // красный
-        if ratio < 1.05 { return Color(hex: "#FBBF24") }         // жёлтый — эквивалент
-        return Color(hex: "#22C55E")                              // зелёный
+        if ratio < 0.95 { return Color(hex: "#EF4444") }
+        if ratio < 1.05 { return Color(hex: "#FBBF24") }
+        return Color(hex: "#22C55E")
     }
 
     private var controls: some View {
