@@ -1,24 +1,19 @@
 import SwiftUI
 
+// Все экраны меню
+enum LabMenuItem: String, Identifiable {
+    case achievements, diary, daily, atom, solubility, molarMass
+    case electrolysis, distillation, titration, indicators
+    case buildReaction, molecule, redox, quiz
+
+    var id: String { rawValue }
+}
+
 struct LabMenuView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var themeManager = ThemeManager.shared
 
-    @State private var showAchievements = false
-    @State private var showDiary = false
-    @State private var showAtom = false
-    @State private var showSolubility = false
-    @State private var showIndicators = false
-    @State private var showMolarMass = false
-    @State private var showQuiz = false
-    @State private var showElectrolysis = false
-    @State private var showDistillation = false
-    @State private var showTitration = false
-    @State private var showBuildReaction = false
-    @State private var showMolecule = false
-    @State private var showRedox = false
-    @State private var showDaily = false
-
+    @State private var activeItem: LabMenuItem? = nil
     @State private var soundEnabled = SoundManager.shared.enabled
 
     var body: some View {
@@ -31,78 +26,78 @@ struct LabMenuView: View {
                         tile(icon: "trophy.fill", color: "#FBBF24",
                              title: "Достижения",
                              subtitle: "Открыто \(AchievementsStorage.shared.unlocked.count) из \(AchievementsStorage.shared.all.count)") {
-                            showAchievements = true
+                            activeItem = .achievements
                         }
                         tile(icon: "book.closed.fill", color: "#A78BFA",
                              title: "Дневник опытов",
                              subtitle: "Записей: \(DiaryStorage.shared.entries.count)") {
-                            showDiary = true
+                            activeItem = .diary
                         }
                         tile(icon: "calendar", color: "#F97316",
                              title: "Задание дня",
                              subtitle: "Серия: \(UserDefaults.standard.integer(forKey: "chemlab.daily.streak")) 🔥") {
-                            showDaily = true
+                            activeItem = .daily
                         }
 
                         sectionTitle("📚 Справочник")
                         tile(icon: "atom", color: "#60A5FA",
                              title: "Строение атома",
                              subtitle: "Ядро, орбиты, электронные слои") {
-                            showAtom = true
+                            activeItem = .atom
                         }
                         tile(icon: "square.grid.3x3.fill", color: "#22C55E",
                              title: "Таблица растворимости",
                              subtitle: "14 катионов × 10 анионов") {
-                            showSolubility = true
+                            activeItem = .solubility
                         }
                         tile(icon: "function", color: "#F59E0B",
                              title: "Молярная масса",
                              subtitle: "Посчитать M для любой формулы") {
-                            showMolarMass = true
+                            activeItem = .molarMass
                         }
 
                         sectionTitle("⚗️ Опыты")
                         tile(icon: "bolt.fill", color: "#FBBF24",
                              title: "Электролиз",
                              subtitle: "Ванна с электродами и батарейкой") {
-                            showElectrolysis = true
+                            activeItem = .electrolysis
                         }
                         tile(icon: "thermometer.medium", color: "#EF4444",
                              title: "Дистилляция",
                              subtitle: "Колба → холодильник → приёмник") {
-                            showDistillation = true
+                            activeItem = .distillation
                         }
                         tile(icon: "drop.fill", color: "#06B6D4",
                              title: "Титрование",
                              subtitle: "Бюретка, точка эквивалентности") {
-                            showTitration = true
+                            activeItem = .titration
                         }
                         tile(icon: "paintpalette.fill", color: "#EC4899",
                              title: "Индикаторы",
                              subtitle: "Лакмус, метилоранж, фенолфталеин") {
-                            showIndicators = true
+                            activeItem = .indicators
                         }
 
                         sectionTitle("🎮 Игры")
                         tile(icon: "puzzlepiece.fill", color: "#8B5CF6",
                              title: "Собери реакцию",
                              subtitle: "Расставь реагенты и продукты") {
-                            showBuildReaction = true
+                            activeItem = .buildReaction
                         }
                         tile(icon: "circle.hexagongrid.fill", color: "#14B8A6",
                              title: "Конструктор молекул",
                              subtitle: "Собери H₂O, CH₄, CO₂, NH₃") {
-                            showMolecule = true
+                            activeItem = .molecule
                         }
                         tile(icon: "arrow.left.arrow.right", color: "#F43F5E",
                              title: "ОВР баланс",
                              subtitle: "Окислитель и восстановитель") {
-                            showRedox = true
+                            activeItem = .redox
                         }
                         tile(icon: "target", color: "#EF4444",
                              title: "Угадай элемент",
                              subtitle: "Рекорд: \(UserDefaults.standard.integer(forKey: "chemlab.quiz.best"))") {
-                            showQuiz = true
+                            activeItem = .quiz
                         }
 
                         sectionTitle("⚙️ Настройки")
@@ -120,23 +115,29 @@ struct LabMenuView: View {
                         .foregroundColor(Color(hex: "#60A5FA"))
                 }
             }
-            .sheet(isPresented: $showAchievements) { AchievementsView() }
-            .sheet(isPresented: $showDiary) { DiaryView() }
-            .sheet(isPresented: $showAtom) { AtomStructureView() }
-            .sheet(isPresented: $showSolubility) { SolubilityTableView() }
-            .sheet(isPresented: $showIndicators) { IndicatorsView() }
-            .sheet(isPresented: $showMolarMass) { MolarMassView() }
-            .sheet(isPresented: $showQuiz) { GuessElementView() }
-            .sheet(isPresented: $showElectrolysis) { ElectrolysisView() }
-            .sheet(isPresented: $showDistillation) { DistillationView() }
-            .sheet(isPresented: $showTitration) { TitrationView() }
-            .sheet(isPresented: $showBuildReaction) { BuildReactionView() }
-            .sheet(isPresented: $showMolecule) { MoleculeBuilderView() }
-            .sheet(isPresented: $showRedox) { RedoxBalanceView() }
-            .sheet(isPresented: $showDaily) { DailyChallengeView() }
+            .sheet(item: $activeItem) { item in
+                switch item {
+                case .achievements:  AchievementsView()
+                case .diary:         DiaryView()
+                case .daily:         DailyChallengeView()
+                case .atom:          AtomStructureView()
+                case .solubility:    SolubilityTableView()
+                case .molarMass:     MolarMassView()
+                case .electrolysis:  ElectrolysisView()
+                case .distillation:  DistillationView()
+                case .titration:     TitrationView()
+                case .indicators:    IndicatorsView()
+                case .buildReaction: BuildReactionView()
+                case .molecule:      MoleculeBuilderView()
+                case .redox:         RedoxBalanceView()
+                case .quiz:          GuessElementView()
+                }
+            }
         }
         .navigationViewStyle(.stack)
     }
+
+    // MARK: - Компоненты
 
     private func sectionTitle(_ t: String) -> some View {
         HStack {
