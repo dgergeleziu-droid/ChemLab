@@ -23,18 +23,31 @@ final class DiaryStorage: ObservableObject {
 
     @Published private(set) var entries: [DiaryEntry] = []
 
+    // 🚀 Debounce
+    private var saveTimer: Timer?
+    private let saveDelay: TimeInterval = 1.0
+
     private init() { load() }
 
     func add(equation: String, products: [String], warning: String?) {
         let e = DiaryEntry(equation: equation, products: products, warning: warning)
         entries.insert(e, at: 0)
-        if entries.count > maxRecords { entries = Array(entries.prefix(maxRecords)) }
-        save()
+        if entries.count > maxRecords {
+            entries = Array(entries.prefix(maxRecords))
+        }
+        scheduleSave()
     }
 
     func clear() {
         entries.removeAll()
-        save()
+        scheduleSave()
+    }
+
+    private func scheduleSave() {
+        saveTimer?.invalidate()
+        saveTimer = Timer.scheduledTimer(withTimeInterval: saveDelay, repeats: false) { [weak self] _ in
+            self?.save()
+        }
     }
 
     private func save() {
