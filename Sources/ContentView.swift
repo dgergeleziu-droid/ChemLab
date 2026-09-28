@@ -40,6 +40,7 @@ final class ReactionCache {
     static let shared = ReactionCache()
     private var hits: [String: ChemicalReaction] = [:]
     private var misses: Set<String> = []
+    private let maxSize = 500
     private init() {}
 
     func find(_ a: String, _ b: String) -> ChemicalReaction? {
@@ -47,9 +48,17 @@ final class ReactionCache {
         if let r = hits[key] { return r }
         if misses.contains(key) { return nil }
         if let r = ChemistryData.findReaction(a, b) {
+            // Защита от роста: чистим половину при переполнении
+            if hits.count >= maxSize {
+                let keysToRemove = hits.keys.prefix(maxSize / 2)
+                for k in keysToRemove { hits.removeValue(forKey: k) }
+            }
             hits[key] = r
             return r
         } else {
+            if misses.count >= maxSize {
+                misses.removeAll()
+            }
             misses.insert(key)
             return nil
         }
@@ -363,7 +372,7 @@ struct LabView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: isLandscape ? 8 : 12) {
-                    ForEach(ChemistryData.reagents.filter { $0.group == selectedGroup }) { r in
+                    ForEach(ChemistryDataCache.shared.byGroup[selectedGroup] ?? []) { r in
                         ReagentChip(reagent: r, size: isLandscape ? 42 : 56) { addReagent(r) }
                     }
                 }
