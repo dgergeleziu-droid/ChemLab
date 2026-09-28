@@ -15,7 +15,6 @@ struct DistillationView: View {
                 VStack(spacing: 16) {
                     Spacer().frame(height: 4)
 
-                    // Установка
                     HStack(alignment: .bottom, spacing: 4) {
                         flask
                         tube
@@ -24,10 +23,8 @@ struct DistillationView: View {
                     }
                     .frame(height: 260)
 
-                    // Пламя
                     flame
 
-                    // Шкала температуры
                     temperatureGauge
 
                     controls
@@ -84,7 +81,6 @@ struct DistillationView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .strokeBorder(Color.white.opacity(0.5), lineWidth: 1.5)
                 )
-            // Вода в холодильнике
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color(hex: "#3B82F6").opacity(0.35))
                 .frame(width: 30, height: 180)
@@ -182,7 +178,6 @@ struct DistillationView: View {
         } else {
             temperature = max(20, temperature - 0.5)
         }
-        // Спирт испаряется при 78°C
         if temperature >= 78 {
             collected = min(1.0, collected + 0.015)
         }
@@ -190,23 +185,5 @@ struct DistillationView: View {
             heating = false
             SoundManager.shared.success()
         }
-    }
-}
-
-struct FlameShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
-        let w = rect.width, h = rect.height
-        p.move(to: CGPoint(x: w/2, y: 0))
-        p.addQuadCurve(to: CGPoint(x: w, y: h * 0.65),
-                       control: CGPoint(x: w * 1.05, y: h * 0.28))
-        p.addQuadCurve(to: CGPoint(x: w/2, y: h),
-                       control: CGPoint(x: w * 0.9, y: h))
-        p.addQuadCurve(to: CGPoint(x: 0, y: h * 0.65),
-                       control: CGPoint(x: w * 0.1, y: h))
-        p.addQuadCurve(to: CGPoint(x: w/2, y: 0),
-                       control: CGPoint(x: -w * 0.05, y: h * 0.28))
-        p.closeSubpath()
-        return p
     }
 }
