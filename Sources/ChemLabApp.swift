@@ -2,9 +2,12 @@ import SwiftUI
 
 @main
 struct ChemLabApp: App {
+    @StateObject private var themeManager = ThemeManager.shared
+
     var body: some Scene {
         WindowGroup {
             RootView()
+                .preferredColorScheme(themeManager.theme.colorScheme)
         }
     }
 }
@@ -24,7 +27,6 @@ struct RootView: View {
                 .transition(.opacity)
             }
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
                 withAnimation(.easeInOut(duration: 0.8)) {
