@@ -5,8 +5,8 @@ struct BuildReactionView: View {
 
     struct Puzzle: Identifiable {
         let id = UUID()
-        let left: [String]           // правильные реагенты
-        let right: [String]          // правильные продукты
+        let left: [String]
+        let right: [String]
         let equation: String
     }
 
@@ -26,6 +26,7 @@ struct BuildReactionView: View {
     @State private var dragPos: CGPoint = .zero
     @State private var attempts: Int = 0
     @State private var score: Int = 0
+    @State private var flashText: String? = nil
 
     var body: some View {
         NavigationView {
@@ -45,6 +46,7 @@ struct BuildReactionView: View {
                     startScreen
                 }
                 dragPreview
+                flashOverlay
             }
             .navigationTitle("🧩 Собери реакцию")
             .navigationBarTitleDisplayMode(.inline)
@@ -59,21 +61,29 @@ struct BuildReactionView: View {
         .onAppear { if puzzle == nil { start() } }
     }
 
+    // MARK: - Верхняя панель
+
     private var header: some View {
         HStack {
-            Label("\(score)", systemImage: "star.fill").foregroundColor(Color(hex: "#FBBF24"))
+            Label("\(score)", systemImage: "star.fill")
+                .foregroundColor(Color(hex: "#FBBF24"))
             Spacer()
-            Text("Попытка \(attempts)").foregroundColor(Color(hex: "#94A3B8"))
+            Text("Попытка \(attempts)")
+                .foregroundColor(Color(hex: "#94A3B8"))
         }
         .font(.system(size: 13, weight: .semibold))
         .padding(.horizontal, 20)
         .padding(.top, 8)
     }
 
+    // MARK: - Строка уравнения
+
     private func equationRow(_ p: Puzzle) -> some View {
         HStack(spacing: 10) {
             slotRow($slotsLeft, accept: p.left)
-            Text("→").foregroundColor(.white).font(.system(size: 20, weight: .bold))
+            Text("→")
+                .foregroundColor(.white)
+                .font(.system(size: 20, weight: .bold))
             slotRow($slotsRight, accept: p.right)
         }
         .padding(.horizontal, 16)
@@ -86,14 +96,18 @@ struct BuildReactionView: View {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color(hex: "#1E293B"))
                         .frame(width: 70, height: 44)
-                        .overlay(RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(Color.white.opacity(0.3), lineWidth: 1)
+                        )
                     if i < slots.wrappedValue.count {
                         Text(slots.wrappedValue[i])
                             .font(.system(size: 14, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                     } else {
-                        Text("?").font(.system(size: 16)).foregroundColor(Color(hex: "#475569"))
+                        Text("?")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(hex: "#475569"))
                     }
                 }
                 .onDrop(of: [.text], delegate: DropSlotDelegate { text in
@@ -102,6 +116,8 @@ struct BuildReactionView: View {
             }
         }
     }
+
+    // MARK: - Пул чипов
 
     private var poolArea: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -124,6 +140,8 @@ struct BuildReactionView: View {
         .frame(height: 60)
     }
 
+    // MARK: - Кнопки
+
     private func controls(_ p: Puzzle) -> some View {
         HStack(spacing: 12) {
             Button {
@@ -145,21 +163,30 @@ struct BuildReactionView: View {
         }
     }
 
+    // MARK: - Стартовый экран
+
     private var startScreen: some View {
         VStack(spacing: 20) {
             Text("🧩").font(.system(size: 70))
             Text("Собери реакцию")
-                .font(.system(size: 22, weight: .bold)).foregroundColor(.white)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(.white)
             Text("Перетащи реагенты и продукты в нужные слоты")
-                .font(.system(size: 13)).foregroundColor(Color(hex: "#94A3B8"))
-                .multilineTextAlignment(.center).padding(.horizontal, 30)
+                .font(.system(size: 13))
+                .foregroundColor(Color(hex: "#94A3B8"))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 30)
             Button { start() } label: {
-                Text("Начать").font(.system(size: 16, weight: .bold)).foregroundColor(.white)
+                Text("Начать")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
                     .padding(.horizontal, 40).padding(.vertical, 12)
                     .background(Color(hex: "#3B82F6")).cornerRadius(12)
             }
         }
     }
+
+    // MARK: - Пре-вью перетаскивания
 
     @ViewBuilder
     private var dragPreview: some View {
@@ -173,6 +200,26 @@ struct BuildReactionView: View {
                 .allowsHitTesting(false)
         }
     }
+
+    // MARK: - Всплывающее сообщение
+
+    @ViewBuilder
+    private var flashOverlay: some View {
+        if let f = flashText {
+            VStack {
+                Spacer().frame(height: 100)
+                Text(f)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 18).padding(.vertical, 10)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.85)))
+                Spacer()
+            }
+            .transition(.opacity)
+        }
+    }
+
+    // MARK: - Логика
 
     private func insert(_ text: String, into slots: Binding<[String]>, maxCount: Int) {
         guard slots.wrappedValue.count < maxCount else { return }
@@ -196,7 +243,6 @@ struct BuildReactionView: View {
         }
     }
 
-    @State private var flashText: String? = nil
     private func showFlash(_ m: String) {
         withAnimation { flashText = m }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -211,12 +257,15 @@ struct BuildReactionView: View {
         slotsRight = []
         pool = (p.left + p.right).shuffled()
         draggable = nil
+        flashText = nil
     }
 }
 
-// Вспомогательный DropDelegate
+// MARK: - DropDelegate для слота
+
 struct DropSlotDelegate: DropDelegate {
     let onDrop: (String) -> Void
+
     func performDrop(info: DropInfo) -> Bool {
         guard let provider = info.itemProviders(for: [.text]).first else { return false }
         provider.loadObject(ofClass: NSString.self) { obj, _ in
