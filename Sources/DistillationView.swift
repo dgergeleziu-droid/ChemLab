@@ -6,7 +6,8 @@ struct DistillationView: View {
     @State private var temperature: Double = 20
     @State private var heating = false
     @State private var collected: CGFloat = 0
-    @State private var timer = Timer.publish(every: 0.12, on: .main, in: .common).autoconnect()
+
+    @StateObject private var ticker = PhysicsTicker()
 
     var body: some View {
         NavigationView {
@@ -14,7 +15,6 @@ struct DistillationView: View {
                 Color(hex: "#0B1020").ignoresSafeArea()
                 VStack(spacing: 16) {
                     Spacer().frame(height: 4)
-
                     HStack(alignment: .bottom, spacing: 4) {
                         flask
                         tube
@@ -22,11 +22,8 @@ struct DistillationView: View {
                         receiver
                     }
                     .frame(height: 260)
-
                     flame
-
                     temperatureGauge
-
                     controls
                     Spacer()
                 }
@@ -41,7 +38,9 @@ struct DistillationView: View {
             }
         }
         .navigationViewStyle(.stack)
-        .onReceive(timer) { _ in tick() }
+        .onAppear { ticker.start() }
+        .onDisappear { ticker.stop() }
+        .onReceive(ticker.$tick) { _ in tick() }
     }
 
     private var flask: some View {
@@ -174,12 +173,12 @@ struct DistillationView: View {
 
     private func tick() {
         if heating {
-            temperature = min(100, temperature + 1.4)
+            temperature = min(100, temperature + 1.2)
         } else {
-            temperature = max(20, temperature - 0.5)
+            temperature = max(20, temperature - 0.4)
         }
         if temperature >= 78 {
-            collected = min(1.0, collected + 0.015)
+            collected = min(1.0, collected + 0.012)
         }
         if collected >= 0.99 {
             heating = false
