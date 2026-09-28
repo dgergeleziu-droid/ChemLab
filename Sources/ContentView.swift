@@ -35,7 +35,7 @@ struct ContentView: View {
 
 enum AppMode { case lab, exam, revision, editor }
 
-// MARK: - КЭШ РЕАКЦИЙ (ускоряет поиск на порядок)
+// MARK: - КЭШ РЕАКЦИЙ
 final class ReactionCache {
     static let shared = ReactionCache()
     private var hits: [String: ChemicalReaction] = [:]
@@ -78,6 +78,7 @@ struct LabView: View {
     @State private var showConditionsPanel = false
     @State private var showPeriodicTable = false
     @State private var showTestTubeLab = false
+    @State private var showLabMenu = false
 
     var body: some View {
         GeometryReader { geo in
@@ -142,6 +143,9 @@ struct LabView: View {
         }
         .fullScreenCover(isPresented: $showTestTubeLab) {
             TestTubeLabView()
+        }
+        .sheet(isPresented: $showLabMenu) {
+            LabMenuView()
         }
         .onChange(of: incomingReagents) { reagents in
             guard !reagents.isEmpty else { return }
@@ -329,6 +333,31 @@ struct LabView: View {
                             )
                     )
                 }
+
+                Button {
+                    showLabMenu = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.grid.2x2.fill")
+                            .font(.system(size: 13))
+                        Text("Меню")
+                            .font(.system(size: 13, weight: .semibold))
+                        Spacer()
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, isLandscape ? 8 : 11)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "#F59E0B"), Color(hex: "#EA580C")],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
+                }
             }
             .padding(.horizontal, 12)
 
@@ -357,6 +386,7 @@ struct LabView: View {
                 worldPosition: CGPoint(x: wx, y: wy), kind: .reagent, colorHex: r.colorHex))
         }
         showToast("Добавлено: \(r.name)")
+        SoundManager.shared.click()
     }
 
     func showToast(_ m: String) {
@@ -364,7 +394,6 @@ struct LabView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { withAnimation { toastMessage = nil } }
     }
 
-    // ⚡️ Оптимизировано: без sqrt, с кэшем, с защитой от повторных срабатываний
     func checkReactions() {
         let th: CGFloat = 130
         let th2 = th * th
@@ -488,6 +517,24 @@ struct LabView: View {
         reactingItems.remove(aID)
         reactingItems.remove(bID)
         showToast("⚗️ \(reaction.equation)")
+
+        // Ачивки и дневник
+        AchievementsStorage.shared.add("first_reaction")
+        AchievementsStorage.shared.add("chemist_50")
+        AchievementsStorage.shared.add("chemist_100")
+        if reaction.effect == .explosion || reaction.effect == .flash {
+            AchievementsStorage.shared.add("explosionist")
+        }
+        if reaction.effect == .precipitateWhite || reaction.effect == .precipitateBlue
+            || reaction.effect == .precipitateBrown || reaction.effect == .precipitateYellow {
+            AchievementsStorage.shared.add("analyst")
+        }
+        if reaction.effect == .gas { AchievementsStorage.shared.add("gas_master") }
+        DiaryStorage.shared.add(equation: reaction.equation,
+                                products: reaction.productNames,
+                                warning: reaction.warning)
+        AchievementsStorage.shared.set("diary_20", to: DiaryStorage.shared.entries.count)
+        SoundManager.shared.explode()
 
         let eid = effect.id
         DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
@@ -793,6 +840,8 @@ struct ExamView: View {
         result = res
         showResult = true
         ExamResultStorage.shared.save(from: res)
+
+        if correct >= 5 { AchievementsStorage.shared.add("theorist") }
     }
 
     func resultView(result res: ExamResult) -> some View {
@@ -863,7 +912,8 @@ struct IntroOverlay: View {
                         row(icon: "drop.fill", text: "От продукта ещё 10 сек идёт эффект (вода, газ, осадок)")
                         row(icon: "slider.horizontal.3", text: "Кнопка «Условия» — справа снизу (нагрев, кат., свет)")
                         row(icon: "rectangle.grid.3x2.fill", text: "Таблица Менделеева — кнопка внизу")
-                        row(icon: "testtube.2", text: "Пробирка — отдельный режим со спиртовкой")
+                        row(icon: "testtube.2", text: "Пробирка — режим со спиртовкой и наклоном")
+                        row(icon: "square.grid.2x2.fill", text: "Меню — достижения, дневник, атом, справочник")
                         row(icon: "hand.tap.fill", text: "Двойной тап по элементу — удалить")
                     }.padding(16).background(Color(hex: "#1E293B")).cornerRadius(16).padding(.horizontal, 8)
                     Button(action: onClose) {
