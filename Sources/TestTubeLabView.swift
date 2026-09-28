@@ -50,7 +50,7 @@ struct TubeContent: Identifiable, Equatable {
 }
 
 // ============================================================
-// MARK: - Таймер физики (живёт вне View, не пересоздаётся)
+// MARK: - Таймер физики
 // ============================================================
 
 final class PhysicsTicker: ObservableObject {
@@ -74,8 +74,6 @@ final class PhysicsTicker: ObservableObject {
 // MARK: - Фигуры
 // ============================================================
 
-/// Поверхность жидкости всегда горизонтальна в мире.
-/// Внутри локальных координат пробирки компенсируем её наклон.
 struct TiltedLiquidShape: Shape {
     var fillLevel: CGFloat
     var tubeAngle: Angle
@@ -151,8 +149,6 @@ struct GlassTubeBody: View {
 
     var body: some View {
         ZStack {
-
-            // 1. Тёмная подложка стекла (объём)
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(
                     LinearGradient(
@@ -165,7 +161,6 @@ struct GlassTubeBody: View {
                     )
                 )
 
-            // 2. Жидкость
             if let liquid = liquid {
                 ZStack {
                     TiltedLiquidShape(fillLevel: liquid.amount, tubeAngle: tubeAngle)
@@ -180,12 +175,10 @@ struct GlassTubeBody: View {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
 
-                    // Блестящий мениск на поверхности
                     TiltedLiquidShape(fillLevel: liquid.amount, tubeAngle: tubeAngle)
                         .stroke(Color.white.opacity(0.35), lineWidth: 1)
                         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
 
-                    // Мягкое свечение сверху жидкости
                     TiltedLiquidShape(fillLevel: liquid.amount + 0.06, tubeAngle: tubeAngle)
                         .fill(Color.white.opacity(0.10))
                         .blendMode(.plusLighter)
@@ -194,7 +187,6 @@ struct GlassTubeBody: View {
                 }
             }
 
-            // 3. Твёрдые частицы
             if !solids.isEmpty {
                 VStack {
                     Spacer()
@@ -225,7 +217,6 @@ struct GlassTubeBody: View {
                 }
             }
 
-            // 4. Пузырьки газа
             if gasCount > 0 {
                 ZStack {
                     ForEach(0..<min(gasCount * 4, 16), id: \.self) { i in
@@ -236,10 +227,8 @@ struct GlassTubeBody: View {
                 .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             }
 
-            // 5. Блики стекла
             GlassHighlights(tubeW: tubeW, tubeH: tubeH)
 
-            // 6. Свечение дна при нагреве
             if temperature > 35 {
                 let t = min((temperature - 35) / 65, 1.0)
                 VStack {
@@ -261,7 +250,6 @@ struct GlassTubeBody: View {
                 .allowsHitTesting(false)
             }
 
-            // 7. Пар
             if temperature > 55 {
                 let opacity = min((temperature - 55) / 45, 1.0) * 0.6
                 VStack {
@@ -282,7 +270,6 @@ struct GlassTubeBody: View {
                 .allowsHitTesting(false)
             }
 
-            // 8. Основная окантовка
             RoundedRectangle(cornerRadius: cornerRadius)
                 .strokeBorder(
                     LinearGradient(
@@ -296,12 +283,10 @@ struct GlassTubeBody: View {
                     lineWidth: 1.8
                 )
 
-            // 9. Двойная внутренняя окантовка (эффект толщины стекла)
             RoundedRectangle(cornerRadius: cornerRadius - 2)
                 .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 .padding(3)
 
-            // 10. Эллипс-горлышко
             Ellipse()
                 .strokeBorder(
                     LinearGradient(
@@ -321,7 +306,6 @@ struct GlassTubeBody: View {
         }
         .frame(width: tubeW, height: tubeH)
         .overlay(
-            // Отражение на стекле (очень тонкий блик)
             RoundedRectangle(cornerRadius: cornerRadius)
                 .stroke(Color.white.opacity(0.05), lineWidth: 6)
                 .blur(radius: 3)
@@ -351,7 +335,6 @@ struct GlassHighlights: View {
 
     var body: some View {
         ZStack {
-            // Главная вертикальная полоса блика слева
             Capsule()
                 .fill(
                     LinearGradient(
@@ -368,7 +351,6 @@ struct GlassHighlights: View {
                 .blur(radius: 2)
                 .offset(x: -tubeW * 0.28, y: -tubeH * 0.02)
 
-            // Тонкая полоса справа
             Capsule()
                 .fill(
                     LinearGradient(
@@ -384,14 +366,12 @@ struct GlassHighlights: View {
                 .blur(radius: 1.5)
                 .offset(x: tubeW * 0.30, y: tubeH * 0.06)
 
-            // Маленькая точка-искра сверху
             Ellipse()
                 .fill(Color.white.opacity(0.45))
                 .frame(width: tubeW * 0.20, height: 5)
                 .blur(radius: 2)
                 .offset(x: -tubeW * 0.15, y: -tubeH * 0.36)
 
-            // Мягкое свечение сверху под горлышком
             Ellipse()
                 .fill(Color.white.opacity(0.15))
                 .frame(width: tubeW * 0.55, height: 8)
@@ -459,10 +439,8 @@ struct AlcoholLampView: View {
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 0) {
-                // Пламя
                 ZStack {
                     if lit {
-                        // Ореол
                         Circle()
                             .fill(
                                 RadialGradient(
@@ -478,7 +456,6 @@ struct AlcoholLampView: View {
                             .offset(y: -6)
                             .blendMode(.plusLighter)
 
-                        // Внешнее пламя
                         FlameShape()
                             .fill(
                                 LinearGradient(
@@ -495,7 +472,6 @@ struct AlcoholLampView: View {
                             .offset(y: -6)
                             .shadow(color: Color(hex: "#F97316").opacity(0.7), radius: 12)
 
-                        // Среднее
                         FlameShape()
                             .fill(
                                 LinearGradient(
@@ -510,7 +486,6 @@ struct AlcoholLampView: View {
                             .scaleEffect(y: 0.94 + innerFlicker * 0.10)
                             .offset(y: 0)
 
-                        // Ядро
                         FlameShape()
                             .fill(Color(hex: "#EFF6FF"))
                             .frame(width: 9, height: 18)
@@ -526,13 +501,11 @@ struct AlcoholLampView: View {
                 .frame(width: 100, height: 74)
                 .offset(y: 2)
 
-                // Фитиль
                 RoundedRectangle(cornerRadius: 1)
                     .fill(Color(hex: "#3F1D0A"))
                     .frame(width: 3, height: 10)
                     .offset(y: -2)
 
-                // Металлическое кольцо (держатель фитиля)
                 ZStack {
                     RoundedRectangle(cornerRadius: 3)
                         .fill(
@@ -549,9 +522,7 @@ struct AlcoholLampView: View {
                 }
                 .offset(y: -2)
 
-                // Корпус (склянка с плечиками)
                 ZStack {
-                    // Основной силуэт
                     LampBodyShape()
                         .fill(
                             LinearGradient(
@@ -578,7 +549,6 @@ struct AlcoholLampView: View {
                                 .frame(width: lampW, height: lampH)
                         )
 
-                    // Спирт внутри
                     VStack {
                         Spacer()
                         RoundedRectangle(cornerRadius: 10)
@@ -596,7 +566,6 @@ struct AlcoholLampView: View {
                     }
                     .frame(width: lampW, height: lampH)
 
-                    // Блик на стекле
                     Capsule()
                         .fill(Color.white.opacity(0.35))
                         .frame(width: 4, height: 32)
@@ -618,7 +587,6 @@ struct AlcoholLampView: View {
     }
 }
 
-/// Силуэт склянки спиртовки: узкое горло + расширяющееся тело с плечиками
 struct LampBodyShape: Shape {
     func path(in rect: CGRect) -> Path {
         var p = Path()
@@ -627,32 +595,23 @@ struct LampBodyShape: Shape {
         let neckH = h * 0.22
         let shoulderH = h * 0.12
 
-        // Начало — слева от горла
         p.move(to: CGPoint(x: (w - neckW)/2, y: 0))
-        // Правая сторона горла
         p.addLine(to: CGPoint(x: (w + neckW)/2, y: 0))
-        // Правое плечо (скругление)
         p.addQuadCurve(
             to: CGPoint(x: w, y: neckH + shoulderH),
             control: CGPoint(x: w * 0.95, y: neckH + shoulderH * 0.4)
         )
-        // Правая стенка вниз
         p.addLine(to: CGPoint(x: w, y: h - 6))
-        // Скругление правого дна
         p.addQuadCurve(
             to: CGPoint(x: w - 6, y: h),
             control: CGPoint(x: w, y: h)
         )
-        // Дно
         p.addLine(to: CGPoint(x: 6, y: h))
-        // Скругление левого дна
         p.addQuadCurve(
             to: CGPoint(x: 0, y: h - 6),
             control: CGPoint(x: 0, y: h)
         )
-        // Левая стенка вверх
         p.addLine(to: CGPoint(x: 0, y: neckH + shoulderH))
-        // Левое плечо
         p.addQuadCurve(
             to: CGPoint(x: (w - neckW)/2, y: 0),
             control: CGPoint(x: w * 0.05, y: neckH + shoulderH * 0.4)
@@ -663,7 +622,7 @@ struct LampBodyShape: Shape {
 }
 
 // ============================================================
-// MARK: - Чип реагента (для drag)
+// MARK: - Чип реагента
 // ============================================================
 
 struct InlineChip: View {
@@ -721,45 +680,38 @@ struct TestTubeLabView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var ticker = PhysicsTicker()
 
-    // Пробирка
     @State private var tubeTopAnchor: CGPoint = .zero
     @State private var tubeAngle: Angle = .degrees(0)
     @State private var isDraggingTube: Bool = false
     @State private var dragStartAnchor: CGPoint = .zero
 
-    // Содержимое
     @State private var contents: [TubeContent] = []
 
-    // Нагрев
     @State private var temperature: Double = 20
     @State private var lampLit = false
     @State private var isHeatingNow = false
 
-    // Панель реагентов
     @State private var selectedState: AggregateState = .liquid
     @State private var draggingReagent: Reagent? = nil
     @State private var dragPosition: CGPoint = .zero
 
-    // Реакции
     @State private var reactionResult: ChemicalReaction? = nil
     @State private var showReactionCard = false
 
-    // Утилиты
     @State private var toastMessage: String? = nil
     @State private var flashOpacity: Double = 0
     @State private var shakeOffset: CGFloat = 0
     @State private var spillCooldown: Double = 0
     @State private var screenSize: CGSize = .zero
 
-    // Размеры
     private let tubeW: CGFloat = 96
     private let tubeH: CGFloat = 240
 
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                background(geo: geo)
-                table(geo: geo)
+                background
+                table
                 lampLayer(geo: geo)
                 tubeLayer(geo: geo)
                 heatingIndicator(geo: geo)
@@ -795,18 +747,17 @@ struct TestTubeLabView: View {
     // MARK: - Слои
     // ============================================================
 
-    private func background(geo: GeometryProxy) -> some View {
+    private var background: some View {
         LinearGradient(
             colors: [Color(hex: "#0B1020"), Color(hex: "#101A2E")],
             startPoint: .top, endPoint: .bottom
         ).ignoresSafeArea()
     }
 
-    private func table(geo: GeometryProxy) -> some View {
+    private var table: some View {
         VStack {
             Spacer()
             ZStack(alignment: .top) {
-                // Основная поверхность стола
                 Rectangle()
                     .fill(
                         LinearGradient(
@@ -819,7 +770,6 @@ struct TestTubeLabView: View {
                     )
                     .frame(height: 200)
 
-                // Тонкая световая линия по краю
                 Rectangle()
                     .fill(
                         LinearGradient(
@@ -832,7 +782,6 @@ struct TestTubeLabView: View {
                     )
                     .frame(height: 1)
 
-                // Текстура дерева (несколько горизонтальных бороздок)
                 VStack(spacing: 26) {
                     ForEach(0..<6, id: \.self) { i in
                         Rectangle()
@@ -856,6 +805,11 @@ struct TestTubeLabView: View {
         return CGPoint(x: lamp.x, y: lamp.y - 132)
     }
 
+    private func flameTipPositionFromScreen() -> CGPoint {
+        let lamp = CGPoint(x: screenSize.width / 2, y: screenSize.height - 155)
+        return CGPoint(x: lamp.x, y: lamp.y - 132)
+    }
+
     private func lampLayer(geo: GeometryProxy) -> some View {
         let pos = lampPosition(geo: geo)
         return AlcoholLampView(
@@ -864,6 +818,7 @@ struct TestTubeLabView: View {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
                     lampLit.toggle()
                 }
+                if lampLit { SoundManager.shared.flame() }
                 showToast(lampLit ? "🔥 Спиртовка горит" : "Спиртовка потушена")
             }
         )
@@ -875,7 +830,6 @@ struct TestTubeLabView: View {
         let solids = contents.filter { $0.state == .solid }
         let gasCount = contents.filter { $0.state == .gas }.count
 
-        // Насколько близко пламя к дну — для эффекта «обнимания»
         let bottom = tubeBottomWorld()
         let flame = flameTipPosition(geo: geo)
         let dx = bottom.x - flame.x
@@ -912,11 +866,10 @@ struct TestTubeLabView: View {
                 let newX = dragStartAnchor.x + value.translation.width
                 let newY = dragStartAnchor.y + value.translation.height
 
-                // Ограничения по экрану
                 let minX = tubeW / 2 + 8
                 let maxX = geo.size.width - tubeW / 2 - 8
                 let minY: CGFloat = 80
-                let maxY = geo.size.height - 240  // над панелью реагентов
+                let maxY = geo.size.height - 240
 
                 tubeTopAnchor = CGPoint(
                     x: min(max(newX, minX), maxX),
@@ -968,7 +921,6 @@ struct TestTubeLabView: View {
 
     private func hudLayer(geo: GeometryProxy) -> some View {
         VStack(spacing: 8) {
-            // Верхняя панель
             HStack(spacing: 10) {
                 Button { dismiss() } label: {
                     HStack(spacing: 6) {
@@ -1012,7 +964,6 @@ struct TestTubeLabView: View {
 
             Spacer()
 
-            // Кнопки поворота
             HStack(spacing: 10) {
                 rotateButton(degrees: -15, icon: "rotate.left", label: "-15°")
                 rotateButton(degrees: 15, icon: "rotate.right", label: "+15°")
@@ -1090,6 +1041,7 @@ struct TestTubeLabView: View {
                 let next = tubeAngle.degrees + degrees
                 tubeAngle = .degrees(min(max(next, -90), 90))
             }
+            SoundManager.shared.click()
         } label: {
             VStack(spacing: 2) {
                 Image(systemName: icon)
@@ -1221,10 +1173,8 @@ struct TestTubeLabView: View {
     private func physicsTick() {
         guard screenSize != .zero else { return }
 
-        // Нагрев
         let bottom = tubeBottomWorld()
-        let lamp = lampPosition(geo: fakeGeo)
-        let flame = CGPoint(x: lamp.x, y: lamp.y - 132)
+        let flame = flameTipPositionFromScreen()
         let dx = bottom.x - flame.x
         let dy = bottom.y - flame.y
         let dist = sqrt(dx*dx + dy*dy)
@@ -1237,7 +1187,6 @@ struct TestTubeLabView: View {
             temperature = max(20, temperature - 0.5)
         }
 
-        // Спил при сильном наклоне
         if let idx = contents.lastIndex(where: { $0.state == .liquid }) {
             let tilt = abs(tubeAngle.degrees)
             if tilt > 55 && contents[idx].amount > 0.05 {
@@ -1254,19 +1203,9 @@ struct TestTubeLabView: View {
         }
         spillCooldown = max(0, spillCooldown - 0.1)
 
-        // Реакция при нагреве
         if temperature > 55 {
             tryReaction(requireHeat: true)
         }
-    }
-
-    /// Заглушка для physicsTick, где нет GeometryProxy
-    private var fakeGeo: GeometryProxy {
-        // Мы используем только geo.size — передаём сохранённый
-        // SwiftUI не даёт создать GeometryProxy, но мы можем обойтись
-        // координатами через screenSize напрямую.
-        // Специальный обходной путь ниже:
-        TubeFakeGeo(size: screenSize)
     }
 
     private func tubeBottomWorld() -> CGPoint {
@@ -1317,6 +1256,7 @@ struct TestTubeLabView: View {
             contents.append(item)
         }
         showToast("Добавлено: \(r.name)")
+        SoundManager.shared.bubble()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
             tryReaction(requireHeat: nil)
@@ -1374,6 +1314,24 @@ struct TestTubeLabView: View {
                 showReactionCard = true
             }
         }
+
+        // Ачивки и дневник
+        AchievementsStorage.shared.add("first_reaction")
+        AchievementsStorage.shared.add("chemist_50")
+        AchievementsStorage.shared.add("chemist_100")
+        if r.effect == .explosion || r.effect == .flash {
+            AchievementsStorage.shared.add("explosionist")
+        }
+        if r.effect == .precipitateWhite || r.effect == .precipitateBlue
+            || r.effect == .precipitateBrown || r.effect == .precipitateYellow {
+            AchievementsStorage.shared.add("analyst")
+        }
+        if r.effect == .gas { AchievementsStorage.shared.add("gas_master") }
+        DiaryStorage.shared.add(equation: r.equation,
+                                products: r.productNames,
+                                warning: r.warning)
+        AchievementsStorage.shared.set("diary_20", to: DiaryStorage.shared.entries.count)
+        SoundManager.shared.explode()
     }
 
     private func reactionCardView(_ r: ChemicalReaction) -> some View {
@@ -1450,14 +1408,4 @@ struct TestTubeLabView: View {
             withAnimation { toastMessage = nil }
         }
     }
-}
-
-// ============================================================
-// MARK: - Вспомогательный псевдо-GeometryProxy для физики
-// ============================================================
-
-/// Нужен только для того, чтобы physicsTick мог получить размер экрана.
-/// Настоящий GeometryProxy создать нельзя, поэтому используем обёртку.
-struct TubeFakeGeo {
-    let size: CGSize
 }
