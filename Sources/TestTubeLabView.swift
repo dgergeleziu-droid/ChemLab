@@ -71,7 +71,7 @@ final class PhysicsTicker: ObservableObject {
 }
 
 // ============================================================
-// MARK: - Фигура жидкости с горизонтальной поверхностью
+// MARK: - Фигура жидкости
 // ============================================================
 
 struct TiltedLiquidShape: Shape {
@@ -517,7 +517,7 @@ struct AlcoholLampView: View {
                         .frame(width: lampW, height: lampH)
                         .overlay(
                             LampBodyShape()
-                                .strokeBorder(
+                                .stroke(
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.55),
@@ -689,10 +689,6 @@ struct TestTubeLabView: View {
             physicsTick()
         }
     }
-
-    // ============================================================
-    // MARK: - Слои
-    // ============================================================
 
     private var background: some View {
         LinearGradient(
@@ -1113,10 +1109,6 @@ struct TestTubeLabView: View {
         .allowsHitTesting(false)
     }
 
-    // ============================================================
-    // MARK: - Физика
-    // ============================================================
-
     private func physicsTick() {
         guard screenSize != .zero else { return }
 
@@ -1162,10 +1154,6 @@ struct TestTubeLabView: View {
             y: tubeTopAnchor.y + tubeH * cos(rad)
         )
     }
-
-    // ============================================================
-    // MARK: - Работа с реагентами
-    // ============================================================
 
     private func dropReagent(_ r: Reagent, at point: CGPoint) {
         let dx = point.x - tubeTopAnchor.x
@@ -1230,10 +1218,6 @@ struct TestTubeLabView: View {
             }
         }
     }
-
-    // ============================================================
-    // MARK: - Реакция
-    // ============================================================
 
     private func fireReaction(_ r: ChemicalReaction) {
         reactionResult = r
