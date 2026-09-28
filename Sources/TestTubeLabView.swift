@@ -1,46 +1,6 @@
 import SwiftUI
 
 // ============================================================
-// MARK: - Агрегатное состояние
-// ============================================================
-
-enum AggregateState: String, CaseIterable {
-    case liquid = "Жидкости"
-    case solid  = "Твёрдые"
-    case gas    = "Газы"
-
-    var icon: String {
-        switch self {
-        case .liquid: return "drop.fill"
-        case .solid:  return "cube.fill"
-        case .gas:    return "wind"
-        }
-    }
-}
-
-extension ChemistryData {
-    static func aggregateState(of symbol: String) -> AggregateState {
-        if let cached = ChemistryDataCache.shared.stateOf[symbol] {
-            return cached
-        }
-        // Fallback (если символ не в кэше — напр. продукт, не реагент)
-        let gases: Set<String> = [
-            "H","O","N","F","Cl","He","Ne","Ar","Kr","Xe","Rn",
-            "CO","CO2","SO2","SO3","NO","NO2","N2O5","NH3","H2S",
-            "CH4","C2H2","C2H4","C2H6","C3H8","C4H10","PH3","SiH4","B2H6"
-        ]
-        let liquids: Set<String> = [
-            "H2O","H2SO4","HNO3","HCl","HBr","HI","HF",
-            "C2H5OH","CH3OH","C6H6","C6H5OH","CH3COOH",
-            "C2H5Br","CH3Cl","C2H5Cl","Br","Hg"
-        ]
-        if gases.contains(symbol)   { return .gas }
-        if liquids.contains(symbol) { return .liquid }
-        return .solid
-    }
-}
-
-// ============================================================
 // MARK: - Содержимое пробирки
 // ============================================================
 
@@ -135,7 +95,6 @@ struct GlassTubeBody: View {
 
     var body: some View {
         ZStack {
-            // 1. Подложка стекла
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(
                     LinearGradient(
@@ -148,7 +107,6 @@ struct GlassTubeBody: View {
                     )
                 )
 
-            // 2. Жидкость
             if let liquid = liquid {
                 ZStack {
                     TiltedLiquidShape(fillLevel: liquid.amount, tubeAngle: tubeAngle)
@@ -169,7 +127,6 @@ struct GlassTubeBody: View {
                 }
             }
 
-            // 3. Твёрдые
             if !solids.isEmpty {
                 VStack {
                     Spacer()
@@ -200,7 +157,6 @@ struct GlassTubeBody: View {
                 }
             }
 
-            // 4. Пузырьки
             if gasCount > 0 {
                 ZStack {
                     ForEach(0..<min(gasCount * 4, 16), id: \.self) { i in
@@ -211,10 +167,8 @@ struct GlassTubeBody: View {
                 .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             }
 
-            // 5. Блики стекла (упрощено: без blur на каждом слое)
             GlassHighlights(tubeW: tubeW, tubeH: tubeH)
 
-            // 6. Свечение дна
             if temperature > 35 {
                 let t = min((temperature - 35) / 65, 1.0)
                 VStack {
@@ -236,7 +190,6 @@ struct GlassTubeBody: View {
                 .allowsHitTesting(false)
             }
 
-            // 7. Пар
             if temperature > 55 {
                 let opacity = min((temperature - 55) / 45, 1.0) * 0.6
                 VStack {
@@ -257,7 +210,6 @@ struct GlassTubeBody: View {
                 .allowsHitTesting(false)
             }
 
-            // 8. Окантовка
             RoundedRectangle(cornerRadius: cornerRadius)
                 .strokeBorder(
                     LinearGradient(
@@ -275,7 +227,6 @@ struct GlassTubeBody: View {
                 .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 .padding(3)
 
-            // 9. Горлышко
             Ellipse()
                 .strokeBorder(
                     LinearGradient(
@@ -306,7 +257,7 @@ struct GlassTubeBody: View {
 }
 
 // ============================================================
-// MARK: - Блики стекла (упрощено: без blur)
+// MARK: - Блики стекла
 // ============================================================
 
 struct GlassHighlights: View {
@@ -315,7 +266,6 @@ struct GlassHighlights: View {
 
     var body: some View {
         ZStack {
-            // Главная полоса блика
             Capsule()
                 .fill(
                     LinearGradient(
@@ -331,13 +281,11 @@ struct GlassHighlights: View {
                 .frame(width: tubeW * 0.13, height: tubeH * 0.72)
                 .offset(x: -tubeW * 0.28, y: -tubeH * 0.02)
 
-            // Тонкая справа
             Capsule()
                 .fill(Color.white.opacity(0.30))
                 .frame(width: tubeW * 0.05, height: tubeH * 0.50)
                 .offset(x: tubeW * 0.30, y: tubeH * 0.06)
 
-            // Точка сверху
             Ellipse()
                 .fill(Color.white.opacity(0.45))
                 .frame(width: tubeW * 0.20, height: 5)
@@ -646,7 +594,6 @@ struct TestTubeLabView: View {
                         y: geo.size.height * 0.18
                     )
                 }
-                // 🔒 Кэш позиции пламени: считаем один раз
                 cachedFlameTip = CGPoint(
                     x: geo.size.width / 2,
                     y: geo.size.height - 155 - 132
@@ -740,12 +687,11 @@ struct TestTubeLabView: View {
         let solids = contents.filter { $0.state == .solid }
         let gasCount = contents.filter { $0.state == .gas }.count
 
-        // Сравнение по квадратам расстояния — без sqrt
         let bottom = tubeBottomWorld()
         let flame = flameTipPosition(geo: geo)
         let dx = bottom.x - flame.x
         let dy = bottom.y - flame.y
-        let litNearby = lampLit && (dx*dx + dy*dy) < 8100  // 90²
+        let litNearby = lampLit && (dx*dx + dy*dy) < 8100
 
         return GlassTubeBody(
             tubeW: tubeW,
@@ -996,7 +942,6 @@ struct TestTubeLabView: View {
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: 10) {
-                        // 🚀 Берём из кэша
                         ForEach(filteredReagents, id: \.symbol) { r in
                             InlineChip(reagent: r, size: 52)
                                 .gesture(reagentDragGesture(for: r))
@@ -1085,7 +1030,7 @@ struct TestTubeLabView: View {
         let dx = bottom.x - flame.x
         let dy = bottom.y - flame.y
         let distSq = dx*dx + dy*dy
-        let heating = lampLit && distSq < 5625   // 75²
+        let heating = lampLit && distSq < 5625
         isHeatingNow = heating
 
         if heating {
@@ -1130,7 +1075,7 @@ struct TestTubeLabView: View {
         let dy = point.y - tubeTopAnchor.y
         let distSq = dx*dx + dy*dy
 
-        if distSq < 5625 {   // 75²
+        if distSq < 5625 {
             addToTube(r)
         } else {
             showToast("Промахнулся — тащи точнее к устью пробирки")
