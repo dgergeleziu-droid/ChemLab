@@ -74,7 +74,6 @@ struct MolarMassView: View {
 
                     Spacer()
 
-                    // Быстрые примеры
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Примеры:")
                             .font(.system(size: 12, weight: .semibold))
@@ -121,16 +120,17 @@ struct MolarMassView: View {
         result = parsed
     }
 
+    // Возвращает: общая масса + список (символ, количество, вклад)
     private func parse(_ s: String) -> (Double, [(String, Int, Double)])? {
         var total = 0.0
-        var breakdown: [(String, Int, Double)] = [:]
+        var breakdown: [String: (String, Int, Double)] = [:]
         var i = s.startIndex
 
         while i < s.endIndex {
             let c = s[i]
 
+            // Группа в скобках
             if c == "(" {
-                // Найти закрывающую
                 var depth = 1
                 var j = s.index(after: i)
                 while j < s.endIndex && depth > 0 {
@@ -138,10 +138,9 @@ struct MolarMassView: View {
                     if s[j] == ")" { depth -= 1 }
                     if depth > 0 { j = s.index(after: j) }
                 }
-                // Внутренняя часть
                 let inner = String(s[s.index(after: i)..<j])
                 guard let innerParsed = parse(inner) else { return nil }
-                // Множитель
+
                 var k = s.index(after: j)
                 var multStr = ""
                 while k < s.endIndex && s[k].isNumber {
@@ -149,16 +148,20 @@ struct MolarMassView: View {
                     k = s.index(after: k)
                 }
                 let mult = Int(multStr) ?? 1
+
                 total += innerParsed.0 * Double(mult)
+
                 for (el, cnt, _) in innerParsed.1 {
-                    let prev = breakdown[el]?.1 ?? 0
-                    let m = (atomicMass[el] ?? 0)
-                    breakdown[el] = (el, prev + cnt * mult, m * Double(prev + cnt * mult))
+                    let prevCnt = breakdown[el]?.1 ?? 0
+                    let newCnt = prevCnt + cnt * mult
+                    let m = atomicMass[el] ?? 0
+                    breakdown[el] = (el, newCnt, m * Double(newCnt))
                 }
                 i = k
                 continue
             }
 
+            // Элемент
             if c.isUppercase {
                 var el = String(c)
                 var j = s.index(after: i)
@@ -173,9 +176,12 @@ struct MolarMassView: View {
                 }
                 let cnt = Int(cntStr) ?? 1
                 guard let m = atomicMass[el] else { return nil }
+
                 total += m * Double(cnt)
-                let prev = breakdown[el]?.1 ?? 0
-                breakdown[el] = (el, prev + cnt, m * Double(prev + cnt))
+
+                let prevCnt = breakdown[el]?.1 ?? 0
+                let newCnt = prevCnt + cnt
+                breakdown[el] = (el, newCnt, m * Double(newCnt))
                 i = j
                 continue
             }
@@ -183,6 +189,7 @@ struct MolarMassView: View {
             i = s.index(after: i)
         }
 
-        return (total, breakdown.values.sorted { $0.0 < $1.0 }.map { ($0.0, $0.1, $0.2) })
+        let sorted = breakdown.values.sorted { $0.0 < $1.0 }
+        return (total, Array(sorted))
     }
 }
